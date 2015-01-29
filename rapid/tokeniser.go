@@ -16,22 +16,22 @@ type Tokeniser struct {
 	lines            [][]string
 }
 
-func (t *Tokeniser) Push(b byte) {
+func (t *Tokeniser) push(b byte) {
 	t.word = append(t.word, b)
 	t.escape_next_char = false
 }
 
-func (t *Tokeniser) EndLine() {
+func (t *Tokeniser) endLine() {
 }
 
-func (t *Tokeniser) EndWord() {
+func (t *Tokeniser) endWord() {
 }
 
 func (t *Tokeniser) Parse(data []byte) {
 	for _, b := range data {
 		if t.escape_next_char {
 			// TODO: Make unicode safe
-			t.Push(b)
+			t.push(b)
 			t.escape_next_char = true
 		}
 		switch t.quote_type {
@@ -44,12 +44,12 @@ func (t *Tokeniser) Parse(data []byte) {
 			case '\\':
 				t.escape_next_char = true
 			case '\n':
-				t.EndLine()
+				t.endLine()
 			default:
 				if b == ' ' {
-					t.EndWord()
+					t.endWord()
 				} else {
-					t.Push(b)
+					t.push(b)
 				}
 			}
 
@@ -58,7 +58,7 @@ func (t *Tokeniser) Parse(data []byte) {
 			case '\'':
 				t.quote_type = None
 			default:
-				t.Push(b)
+				t.push(b)
 			}
 
 		case Double:
@@ -68,7 +68,7 @@ func (t *Tokeniser) Parse(data []byte) {
 			case '\\':
 				t.escape_next_char = true
 			default:
-				t.Push(b)
+				t.push(b)
 			}
 		}
 	}
