@@ -27,7 +27,7 @@ func (t *Tokeniser) endLine() {
 func (t *Tokeniser) endWord() {
 }
 
-func (t *Tokeniser) Parse(data []byte) {
+func (t *Tokeniser) Parse(data []byte) [][]string {
 	for _, b := range data {
 		if t.escape_next_char {
 			// TODO: Make unicode safe
@@ -72,4 +72,8 @@ func (t *Tokeniser) Parse(data []byte) {
 			}
 		}
 	}
+
+	lines := t.lines
+	t.lines = [][]string{}
+	return lines
 }
