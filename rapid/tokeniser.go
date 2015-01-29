@@ -1,5 +1,7 @@
 package rapid
 
+import "bytes"
+
 type QuoteType int
 
 const (
@@ -11,28 +13,30 @@ const (
 type Tokeniser struct {
 	escape_next_char bool
 	quote_type       QuoteType
-	word             []byte
+	word             *bytes.Buffer
 	words            []string
 	lines            [][]string
 }
 
-func (t *Tokeniser) push(b byte) {
-	t.word = append(t.word, b)
-	t.escape_next_char = false
-}
-
 func (t *Tokeniser) endLine() {
+	// We might still be in the middle of a word
+	t.endWord()
+
+	t.lines = append(t.lines, t.words)
+	t.words = []string{}
 }
 
 func (t *Tokeniser) endWord() {
+	t.words = append(t.words, t.word.String())
+	t.word.Truncate(0)
 }
 
 func (t *Tokeniser) Parse(data []byte) [][]string {
 	for _, b := range data {
 		if t.escape_next_char {
 			// TODO: Make unicode safe
-			t.push(b)
-			t.escape_next_char = true
+			t.word.WriteByte(b)
+			t.escape_next_char = false
 		}
 		switch t.quote_type {
 		case None:
@@ -49,7 +53,7 @@ func (t *Tokeniser) Parse(data []byte) [][]string {
 				if b == ' ' {
 					t.endWord()
 				} else {
-					t.push(b)
+					t.word.WriteByte(b)
 				}
 			}
 
@@ -58,7 +62,7 @@ func (t *Tokeniser) Parse(data []byte) [][]string {
 			case '\'':
 				t.quote_type = None
 			default:
-				t.push(b)
+				t.word.WriteByte(b)
 			}
 
 		case Double:
@@ -68,7 +72,7 @@ func (t *Tokeniser) Parse(data []byte) [][]string {
 			case '\\':
 				t.escape_next_char = true
 			default:
-				t.push(b)
+				t.word.WriteByte(b)
 			}
 		}
 	}
