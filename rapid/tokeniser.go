@@ -42,9 +42,9 @@ func (t *Tokeniser) Parse(data []byte) [][]string {
 		case None:
 			switch b {
 			case '\'':
-				t.quote_type = None
+				t.quote_type = Single
 			case '"':
-				t.quote_type = None
+				t.quote_type = Double
 			case '\\':
 				t.escape_next_char = true
 			case '\n':
