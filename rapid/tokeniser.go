@@ -42,7 +42,9 @@ func (t *Tokeniser) Parse(data []byte) [][]string {
 			// TODO: Make unicode safe
 			t.word.WriteByte(b)
 			t.escape_next_char = false
+			continue
 		}
+
 		switch t.quote_type {
 		case None:
 			switch b {
