@@ -22,7 +22,7 @@ type Tokeniser struct {
 }
 
 func (t *Tokeniser) endLine() {
-	// We might still be in the middle of a word
+	// We might still be in the middle of a word.
 	t.endWord()
 
 	t.lines = append(t.lines, t.words)
@@ -35,6 +35,9 @@ func (t *Tokeniser) endWord() {
 		return
 	}
 
+	// TODO(CaptainHayashi): Find out if String ensures UTF8-cleanliness.
+	// It probably replaces non-UTF8 byte sequences with the replacement
+	// character, but this is unclear.
 	t.words = append(t.words, t.word.String())
 	t.word.Truncate(0)
 }
@@ -42,7 +45,6 @@ func (t *Tokeniser) endWord() {
 func (t *Tokeniser) Parse(data []byte) [][]string {
 	for _, b := range data {
 		if t.escape_next_char {
-			// TODO: Make unicode safe
 			t.word.WriteByte(b)
 			t.escape_next_char = false
 			continue
