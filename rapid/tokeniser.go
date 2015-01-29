@@ -21,6 +21,16 @@ type Tokeniser struct {
 	lines            [][]string
 }
 
+func NewTokeniser() *Tokeniser {
+    t := new(Tokeniser)
+    t.escape_next_char = false
+    t.quote_type = None
+    t.word = new(bytes.Buffer)
+    t.words = []string{}
+    t.lines = [][]string{}
+    return t
+}
+
 func (t *Tokeniser) endLine() {
 	// We might still be in the middle of a word.
 	t.endWord()

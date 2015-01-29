@@ -1,7 +1,6 @@
 package rapid
 
 import (
-	"bytes"
 	"testing"
 )
 
@@ -85,14 +84,7 @@ func TestParse(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		tok := Tokeniser{
-			false,
-			None,
-			new(bytes.Buffer),
-			[]string{},
-			[][]string{},
-		}
-
+		tok := NewTokeniser()
 		got := tok.Parse([]byte(c.in))
 		if !cmp_lines(got, c.want) {
 			t.Errorf("Parse(%q) == %q, want %q", c.in, got, c.want)
