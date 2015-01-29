@@ -1,6 +1,9 @@
 package rapid
 
-import "bytes"
+import (
+	"bytes"
+	"unicode"
+)
 
 type QuoteType int
 
@@ -57,7 +60,10 @@ func (t *Tokeniser) Parse(data []byte) [][]string {
 			case '\n':
 				t.endLine()
 			default:
-				if b == ' ' {
+				// Note that this will only check for ASCII
+				// whitespace, because we only pass it one byte
+				// and non-ASCII whitespace is >1 UTF-8 byte.
+				if unicode.IsSpace(rune(b)) {
 					t.endWord()
 				} else {
 					t.word.WriteByte(b)
