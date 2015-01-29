@@ -4,7 +4,6 @@ import "os"
 import "fmt"
 import "net"
 import "bufio"
-import "github.com/UniversityRadioYork/ury-rapid-go/rapid"
 
 func main() {
 	conn, err := net.Dial("tcp", "127.0.0.1:1350")

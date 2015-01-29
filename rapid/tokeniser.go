@@ -17,23 +17,21 @@ type Tokeniser struct {
 }
 
 func (t *Tokeniser) Push(b byte) {
-	t.word.push(b)
+	t.word = append(t.word, b)
 	t.escape_next_char = false
 }
 
 func (t *Tokeniser) EndLine() {
-	break
 }
 
 func (t *Tokeniser) EndWord() {
-	break
 }
 
 func (t *Tokeniser) Parse(data []byte) {
 	for _, b := range data {
 		if t.escape_next_char {
 			// TODO: Make unicode safe
-			t.word.append(b)
+			t.Push(b)
 			t.escape_next_char = true
 		}
 		switch t.quote_type {
@@ -58,7 +56,7 @@ func (t *Tokeniser) Parse(data []byte) {
 		case Single:
 			switch b {
 			case '\'':
-				t.quote_type = QuoteType.None
+				t.quote_type = None
 			default:
 				t.Push(b)
 			}
@@ -68,7 +66,7 @@ func (t *Tokeniser) Parse(data []byte) {
 			case '"':
 				t.quote_type = None
 			case '\\':
-				t.escape_next_character = true
+				t.escape_next_char = true
 			default:
 				t.Push(b)
 			}
