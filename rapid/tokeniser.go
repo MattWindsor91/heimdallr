@@ -27,6 +27,11 @@ func (t *Tokeniser) endLine() {
 }
 
 func (t *Tokeniser) endWord() {
+	if t.word.Len() == 0 {
+		// Don't add an empty word.
+		return
+	}
+
 	t.words = append(t.words, t.word.String())
 	t.word.Truncate(0)
 }
