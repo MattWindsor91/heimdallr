@@ -83,9 +83,9 @@ func TestParse(t *testing.T) {
 		},
 		// Sample BAPS3 command, with double-quoted Windows path
 		{
-			"enqueue file \"C:\\\\Users\\\\Test\\\\Artist - Title.mp3\" 1\n",
+			`enqueue file "C:\\Users\\Test\\Artist - Title.mp3" 1` + "\n",
 			[][]string{
-				[]string{"enqueue", "file", "C:\\Users\\Test\\Artist - Title.mp3", "1"},
+				[]string{"enqueue", "file", `C:\Users\Test\Artist - Title.mp3`, "1"},
 			},
 		},
 		// Escaped newline
@@ -94,7 +94,7 @@ func TestParse(t *testing.T) {
 			[][]string{[]string{"abc\ndef"}},
 		},
 		{
-			"\"abc\\\ndef\"\n",
+			"\"abc\ndef\"\n",
 			[][]string{[]string{"abc\ndef"}},
 		},
 		{
@@ -111,7 +111,7 @@ func TestParse(t *testing.T) {
 		},
 		// Single-quote escaping
 		{
-			"'hello, I'\\''m an escaped single quote'\n",
+			`'hello, I'\''m an escaped single quote'` + "\n",
 			[][]string{[]string{"hello, I'm an escaped single quote"}},
 		},
 		// UTF-8
