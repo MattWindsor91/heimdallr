@@ -1,4 +1,4 @@
-package rapid
+package tokeniser
 
 import (
 	"testing"

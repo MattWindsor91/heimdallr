@@ -1,4 +1,4 @@
-package rapid
+package tokeniser
 
 import (
 	"bytes"
@@ -22,13 +22,13 @@ type Tokeniser struct {
 }
 
 func NewTokeniser() *Tokeniser {
-    t := new(Tokeniser)
-    t.escape_next_char = false
-    t.quote_type = None
-    t.word = new(bytes.Buffer)
-    t.words = []string{}
-    t.lines = [][]string{}
-    return t
+	t := new(Tokeniser)
+	t.escape_next_char = false
+	t.quote_type = None
+	t.word = new(bytes.Buffer)
+	t.words = []string{}
+	t.lines = [][]string{}
+	return t
 }
 
 func (t *Tokeniser) endLine() {
