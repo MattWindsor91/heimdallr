@@ -45,10 +45,19 @@ func (t *Tokeniser) endWord() {
 		return
 	}
 
-	// TODO(CaptainHayashi): Find out if String ensures UTF8-cleanliness.
-	// It probably replaces non-UTF8 byte sequences with the replacement
-	// character, but this is unclear.
-	t.words = append(t.words, t.word.String())
+	// This ensures any non-UTF8 is replaced with the Unicode replacement
+	// character.  We could use String(), but this would permit invalid
+	// UTF8.
+	uword := []rune{}
+	for {
+		r, _, err := t.word.ReadRune()
+		if err != nil {
+			break
+		}
+		uword = append(uword, r)
+	}
+
+	t.words = append(t.words, string(uword))
 	t.word.Truncate(0)
 }
 

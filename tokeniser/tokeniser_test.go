@@ -46,17 +46,41 @@ func TestParse(t *testing.T) {
 		want [][]string
 	}{
 		// Empty string and empty line
-		{"", [][]string{}},
-		{"\n", [][]string{[]string{}}},
+		{
+			"",
+			[][]string{},
+		},
+		{
+			"\n",
+			[][]string{[]string{}},
+		},
 		// Inter-word whitespace
-		{"foo bar baz\n", [][]string{[]string{"foo", "bar", "baz"}}},
-		{"fizz\tbuzz\tpoo\n", [][]string{[]string{"fizz", "buzz", "poo"}}},
+		{
+			"foo bar baz\n",
+			[][]string{[]string{"foo", "bar", "baz"}},
+		},
+		{
+			"fizz\tbuzz\tpoo\n",
+			[][]string{[]string{"fizz", "buzz", "poo"}},
+		},
 		// CRLF tolerance
-		{"silly windows\r\n", [][]string{[]string{"silly", "windows"}}},
+		{
+			"silly windows\r\n",
+			[][]string{[]string{"silly", "windows"}},
+		},
 		// Leading and trailing whitespace
-		{"     abc def\n", [][]string{[]string{"abc", "def"}}},
-		{"ghi jkl     \n", [][]string{[]string{"ghi", "jkl"}}},
-		{"     mno pqr     \n", [][]string{[]string{"mno", "pqr"}}},
+		{
+			"     abc def\n",
+			[][]string{[]string{"abc", "def"}},
+		},
+		{
+			"ghi jkl     \n",
+			[][]string{[]string{"ghi", "jkl"}},
+		},
+		{
+			"     mno pqr     \n",
+			[][]string{[]string{"mno", "pqr"}},
+		},
 		// Sample BAPS3 command, with double-quoted Windows path
 		{
 			"enqueue file \"C:\\\\Users\\\\Test\\\\Artist - Title.mp3\" 1\n",
@@ -65,9 +89,18 @@ func TestParse(t *testing.T) {
 			},
 		},
 		// Escaped newline
-		{"abc\\\ndef\n", [][]string{[]string{"abc\ndef"}}},
-		{"\"abc\\\ndef\"\n", [][]string{[]string{"abc\ndef"}}},
-		{"'abc\ndef'\n", [][]string{[]string{"abc\ndef"}}},
+		{
+			"abc\\\ndef\n",
+			[][]string{[]string{"abc\ndef"}},
+		},
+		{
+			"\"abc\\\ndef\"\n",
+			[][]string{[]string{"abc\ndef"}},
+		},
+		{
+			"'abc\ndef'\n",
+			[][]string{[]string{"abc\ndef"}},
+		},
 		// Multiple lines
 		{
 			"first line\nsecond line\n",
@@ -80,6 +113,19 @@ func TestParse(t *testing.T) {
 		{
 			"'hello, I'\\''m an escaped single quote'\n",
 			[][]string{[]string{"hello, I'm an escaped single quote"}},
+		},
+		// UTF-8
+		{
+			"北野 武\n",
+			[][]string{[]string{"北野", "武"}},
+		},
+		// Not UTF-8 (ISO-8859-1).
+		// Should replace bad byte with the Unicode replacement
+		// character.  See example at:
+		// https://en.wikipedia.org/wiki/Unicode_replacement_character
+		{
+			"f\xfcr\n",
+			[][]string{[]string{"f\xef\xbf\xbdr"}},
 		},
 	}
 
