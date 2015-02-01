@@ -31,8 +31,8 @@ func TestPack(t *testing.T) {
 		// Backslashes
 		{
 			"load",
-			[]string{"C:\\silly\\windows\\is\\silly"},
-			[]byte("load 'C:\\silly\\windows\\is\\silly'"),
+			[]string{`C:\silly\windows\is\silly`},
+			[]byte(`load 'C:\silly\windows\is\silly'`),
 		},
 		// No args
 		{
@@ -50,13 +50,13 @@ func TestPack(t *testing.T) {
 		{
 			"foo",
 			[]string{"a'bar'b"},
-			[]byte("foo 'a'\\''bar'\\''b'"),
+			[]byte(`foo 'a'\''bar'\''b'`),
 		},
 		// Double quotes
 		{
 			"foo",
-			[]string{"a\"bar\"b"},
-			[]byte("foo 'a\"bar\"b'"),
+			[]string{`a"bar"b`},
+			[]byte(`foo 'a"bar"b'`),
 		},
 	}
 

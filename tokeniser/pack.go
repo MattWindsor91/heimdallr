@@ -3,15 +3,21 @@ package baps3protocol
 import (
 	"bytes"
 	"strings"
+	"unicode"
 )
 
+// Pack a command word and 0+ args into a slice of bytes ready for sending.
+// Args will be single quote escaped if they contain ' " \ or whitespace
 func Pack(word string, args []string) []byte {
 	output := new(bytes.Buffer)
-	// TODO: check command word is valid
 	output.WriteString(word)
 	for _, a := range args {
-		if strings.ContainsAny(a, "'\"\\ ") { // Does this arg contain special characters?
-			a = escapeArgument(a)
+		// Escape arg if needed
+		for _, c := range a {
+			if c < unicode.MaxASCII && (unicode.IsSpace(c) || strings.ContainsRune(`'"\`, c)) {
+				a = escapeArgument(a)
+				break
+			}
 		}
 		output.WriteString(" " + a)
 	}
@@ -19,5 +25,5 @@ func Pack(word string, args []string) []byte {
 }
 
 func escapeArgument(input string) (output string) {
-	return "'" + strings.Replace(input, "'", "'\\''", -1) + "'"
+	return "'" + strings.Replace(input, "'", `'\''`, -1) + "'"
 }
