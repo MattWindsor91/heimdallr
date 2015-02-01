@@ -1,4 +1,4 @@
-package tokeniser
+package baps3protocol
 
 import (
 	"testing"
