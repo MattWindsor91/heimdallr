@@ -1,4 +1,4 @@
-package tokeniser
+package baps3protocol
 
 import (
 	"bytes"
@@ -61,7 +61,7 @@ func (t *Tokeniser) endWord() {
 	t.word.Truncate(0)
 }
 
-func (t *Tokeniser) Parse(data []byte) [][]string {
+func (t *Tokeniser) Tokenise(data []byte) [][]string {
 	for _, b := range data {
 		if t.escape_next_char {
 			t.word.WriteByte(b)
