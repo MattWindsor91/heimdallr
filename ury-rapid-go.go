@@ -6,7 +6,7 @@ import "net"
 import "bufio"
 import "bytes"
 
-import "github.com/UniversityRadioYork/ury-rapid-go/tokeniser"
+import "github.com/UniversityRadioYork/ury-rapid-go/baps3protocol"
 
 func main() {
 	conn, err := net.Dial("tcp", "127.0.0.1:1350")
@@ -14,7 +14,7 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	t := tokeniser.NewTokeniser()
+	t := baps3protocol.NewTokeniser()
 	for {
 		data, err := bufio.NewReader(conn).ReadBytes('\n')
 		if err != nil {
