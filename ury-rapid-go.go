@@ -21,7 +21,7 @@ func main() {
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		lines := t.Parse(data)
+		lines := t.Tokenise(data)
 		buffer := new(bytes.Buffer)
 		for _, line := range lines {
 			for _, word := range line {

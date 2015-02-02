@@ -33,7 +33,7 @@ func cmp_words(a []string, b []string) bool {
 
 }
 
-func TestParse(t *testing.T) {
+func TestTokenise(t *testing.T) {
 	// For now, only test one complete line at a time.
 	// TODO(CaptainHayashi): add partial-line tests.
 
@@ -131,9 +131,9 @@ func TestParse(t *testing.T) {
 
 	for _, c := range cases {
 		tok := NewTokeniser()
-		got := tok.Parse([]byte(c.in))
+		got := tok.Tokenise([]byte(c.in))
 		if !cmp_lines(got, c.want) {
-			t.Errorf("Parse(%q) == %q, want %q", c.in, got, c.want)
+			t.Errorf("Tokenise(%q) == %q, want %q", c.in, got, c.want)
 		}
 	}
 }
