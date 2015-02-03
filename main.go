@@ -1,25 +1,29 @@
 package main
 
+import "time"
 import "os"
+import "os/signal"
+import "syscall"
 import "fmt"
-import "net"
-import "bufio"
 import "math"
 
 func main() {
-	conn, err := net.Dial("tcp", "127.0.0.1:1350")
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	c := InitChannel()
+	ticker := time.NewTicker(time.Second)
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT)
+	c1 := InitChannel(1350)
+	c2 := InitChannel(1351)
+	go c1.Run()
+	go c2.Run()
 	for {
-		data, err := bufio.NewReader(conn).ReadBytes('\n')
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+		select {
+		case <-ticker.C:
+			fmt.Printf("C1: %s: %02d:%02d\n", c1.state, int(c1.time.Minutes()), int(math.Mod(c1.time.Seconds(), 60)))
+			fmt.Printf("C2: %s: %02d:%02d\n", c2.state, int(c2.time.Minutes()), int(math.Mod(c2.time.Seconds(), 60)))
+		case <-sigs:
+			ticker.Stop()
+			fmt.Println("Exiting...")
+			os.Exit(0)
 		}
-		c.Update(data)
-		fmt.Printf("%s: %02d:%02d\n", c.state, int(c.time.Minutes()), int(math.Mod(c.time.Seconds(), 60)))
 	}
 }
