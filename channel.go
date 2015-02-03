@@ -14,6 +14,7 @@ type Channel struct {
 	time      time.Duration
 	tokeniser *baps3protocol.Tokeniser
 	conn      net.Conn
+	buf       *bufio.Reader
 }
 
 func InitChannel(port int) *Channel {
@@ -25,12 +26,13 @@ func InitChannel(port int) *Channel {
 		os.Exit(1)
 	}
 	c.conn = conn
+	c.buf = bufio.NewReader(c.conn)
 	return c
 }
 
 func (c *Channel) Run() {
 	for {
-		data, err := bufio.NewReader(c.conn).ReadBytes('\n')
+		data, err := c.buf.ReadBytes('\n')
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
