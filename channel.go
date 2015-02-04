@@ -41,7 +41,7 @@ func (c *Channel) Run() {
 		for _, line := range lines {
 			switch line[0] {
 			case "TIME":
-				time, err := time.ParseDuration(line[1] + `us`)
+				time, err := time.ParseDuration(line[1] + "us")
 				if err != nil {
 					fmt.Println(err)
 					os.Exit(1)
