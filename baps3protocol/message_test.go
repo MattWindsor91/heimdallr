@@ -2,6 +2,9 @@ package baps3protocol
 
 import "testing"
 
+// cmp_words is defined in tokeniser_test.
+// TODO(CaptainHayashi): move cmp_words elsewhere?
+
 func TestMessageWord(t *testing.T) {
 	cases := []struct {
 		str     string
@@ -35,6 +38,37 @@ func TestMessageWord(t *testing.T) {
 			if gotstr != c.str {
 				t.Errorf("%q.String() == %q, want %q", c.word, gotstr, c.str)
 			}
+		}
+	}
+}
+
+func TestMessage(t *testing.T) {
+	cases := []struct {
+		words []string
+		msg   *message
+	}{
+		// Empty request
+		{[]string{"play"}, NewMessage(RqPlay)},
+		// Request with one argument
+		{[]string{"load", "foo"}, NewMessage(RqLoad).AddArg("foo")},
+		// Request with multiple argument
+		{[]string{"enqueue", "0", "file", "blah"},
+			NewMessage(RqEnqueue).AddArg("0").AddArg("file").AddArg("blah"),
+		},
+		// Empty response
+		{[]string{"END"}, NewMessage(RsEnd)},
+		// Response with one argument
+		{[]string{"FILE", "foo"}, NewMessage(RsFile).AddArg("foo")},
+		// Response with multiple argument
+		{[]string{"FAIL", "nou", "load", "blah"},
+			NewMessage(RsFail).AddArg("nou").AddArg("load").AddArg("blah"),
+		},
+	}
+
+	for _, c := range cases {
+		gotslice := c.msg.AsSlice()
+		if !cmp_words(gotslice, c.words) {
+			t.Errorf("%q.ToSlice() == %q, want %q", c.msg, gotslice, c.words)
 		}
 	}
 }

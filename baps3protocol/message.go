@@ -31,9 +31,14 @@ const (
 	// - Responses
 	RsUnknown
 	// -- Core
+	RsOk
+	RsFail
+	RsWhat
 	RsOhai
 	RsFeatures
 	RsState
+	// -- End feature
+	RsEnd
 	// -- FileLoad feature
 	RsFile
 	// -- TimeReport feature
@@ -55,9 +60,13 @@ var wordStrings = []string{
 	"enqueue",            // RqEnqueue
 	"select",             // RqSelect
 	"<UNKNOWN RESPONSE>", // RsUnknown
+	"OK",                 // RsOk
+	"FAIL",               // RsFail
+	"WHAT",               // RsWhat
 	"OHAI",               // RsOhai
 	"FEATURES",           // RsFeatures
 	"STATE",              // RsState
+	"END",                // RsEnd
 	"FILE",               // RsFile
 	"TIME",               // RsTime
 }
@@ -86,4 +95,32 @@ func LookupWord(word string) MessageWord {
 		return RsUnknown
 	}
 	return BadWord
+}
+
+type message struct {
+	word MessageWord
+	args []string
+}
+
+func NewMessage(word MessageWord) *message {
+	m := new(message)
+	m.word = word
+	return m
+}
+
+func (m *message) AddArg(arg string) *message {
+	m.args = append(m.args, arg)
+	return m
+}
+
+func (m *message) AsSlice() []string {
+	slice := []string{m.word.String()}
+	for _, arg := range m.args {
+		slice = append(slice, arg)
+	}
+	return slice
+}
+
+func (m *message) Pack() []byte {
+	return Pack(m.word.String(), m.args)
 }
