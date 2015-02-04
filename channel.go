@@ -5,7 +5,6 @@ import "fmt"
 import "os"
 import "net"
 import "bufio"
-import "strconv"
 
 import "github.com/UniversityRadioYork/ury-rapid-go/baps3protocol"
 
@@ -17,10 +16,10 @@ type Channel struct {
 	buf       *bufio.Reader
 }
 
-func InitChannel(port int) *Channel {
+func InitChannel(hostport string) *Channel {
 	c := new(Channel)
 	c.tokeniser = baps3protocol.NewTokeniser()
-	conn, err := net.Dial("tcp", "127.0.0.1:"+strconv.Itoa(port))
+	conn, err := net.Dial("tcp", hostport)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

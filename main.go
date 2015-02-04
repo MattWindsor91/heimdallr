@@ -11,8 +11,8 @@ func main() {
 	ticker := time.NewTicker(time.Second)
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT)
-	c1 := InitChannel(1350)
-	c2 := InitChannel(1351)
+	c1 := InitChannel("localhost:1350")
+	c2 := InitChannel("localhost:1351")
 	go c1.Run()
 	go c2.Run()
 	for {
