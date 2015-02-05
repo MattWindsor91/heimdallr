@@ -8,7 +8,7 @@ import "bufio"
 
 import "github.com/UniversityRadioYork/ury-rapid-go/baps3protocol"
 
-type Channel struct {
+type Connector struct {
 	state     string
 	time      time.Duration
 	tokeniser *baps3protocol.Tokeniser
@@ -18,8 +18,8 @@ type Channel struct {
 	reqCh     <-chan string
 }
 
-func InitChannel(hostport string, reqCh <-chan string, resCh chan<- string) *Channel {
-	c := new(Channel)
+func InitConnector(hostport string, reqCh <-chan string, resCh chan<- string) *Connector {
+	c := new(Connector)
 	c.tokeniser = baps3protocol.NewTokeniser()
 	conn, err := net.Dial("tcp", hostport)
 	if err != nil {
@@ -33,7 +33,7 @@ func InitChannel(hostport string, reqCh <-chan string, resCh chan<- string) *Cha
 	return c
 }
 
-func (c *Channel) Run() {
+func (c *Connector) Run() {
 	lineCh := make(chan [][]string, 3)
 	errCh := make(chan error)
 
