@@ -18,9 +18,15 @@ type Connector struct {
 	reqCh     <-chan string
 }
 
-func InitConnector(hostport string, reqCh <-chan string, resCh chan<- string) *Connector {
+func InitConnector(reqCh <-chan string, resCh chan<- string) *Connector {
 	c := new(Connector)
 	c.tokeniser = baps3protocol.NewTokeniser()
+	c.resCh = resCh
+	c.reqCh = reqCh
+	return c
+}
+
+func (c *Connector) Connect(hostport string) {
 	conn, err := net.Dial("tcp", hostport)
 	if err != nil {
 		fmt.Println(err)
@@ -28,9 +34,6 @@ func InitConnector(hostport string, reqCh <-chan string, resCh chan<- string) *C
 	}
 	c.conn = conn
 	c.buf = bufio.NewReader(c.conn)
-	c.resCh = resCh
-	c.reqCh = reqCh
-	return c
 }
 
 func (c *Connector) Run() {
