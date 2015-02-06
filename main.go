@@ -9,8 +9,12 @@ import "io/ioutil"
 
 import "github.com/BurntSushi/toml"
 
+type server struct {
+	Hostport string
+}
+
 type Config struct {
-	servers []string
+	Servers map[string]server
 }
 
 func main() {
@@ -25,22 +29,18 @@ func main() {
 	}
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT)
-	c1ReqCh := make(chan string)
-	c1ResCh := make(chan string)
-	c2ReqCh := make(chan string)
-	c2ResCh := make(chan string)
-	c1 := InitConnector(c1ReqCh, c1ResCh)
-	c2 := InitConnector(c2ReqCh, c2ResCh)
-	c1.Connect("localhost:1350")
-	c2.Connect("localhost:1351")
-	go c1.Run()
-	go c2.Run()
+
+	resCh := make(chan string)
+
+	for name, s := range conf.Servers {
+		c := InitConnector(name, resCh)
+		c.Connect(s.Hostport)
+		go c.Run()
+	}
 	for {
 		select {
-		case data := <-c1ResCh:
-			fmt.Println("C1: " + data)
-		case data := <-c2ResCh:
-			fmt.Println("C2: " + data)
+		case data := <-resCh:
+			fmt.Println(data)
 		case <-sigs:
 			fmt.Println("Exiting...")
 			os.Exit(0)

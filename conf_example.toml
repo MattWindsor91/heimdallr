@@ -1,4 +1,5 @@
-servers = [
-    "127.0.0.1:1350",
-    "127.0.0.1:1351"
-    ]
+[servers]
+    [servers.C1]
+        hostport = "127.0.0.1:1350"
+    [servers.C2]
+        hostport = "127.0.0.1:1351"
