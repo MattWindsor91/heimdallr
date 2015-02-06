@@ -1,27 +1,30 @@
 package main
 
-import "time"
 import "os"
 import "os/signal"
 import "syscall"
 import "fmt"
-import "math"
 
 func main() {
-	ticker := time.NewTicker(time.Second)
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT)
-	c1 := InitChannel(1350)
-	c2 := InitChannel(1351)
+	c1ReqCh := make(chan string)
+	c1ResCh := make(chan string)
+	c2ReqCh := make(chan string)
+	c2ResCh := make(chan string)
+	c1 := InitConnector(c1ReqCh, c1ResCh)
+	c2 := InitConnector(c2ReqCh, c2ResCh)
+	c1.Connect("localhost:1350")
+	c2.Connect("localhost:1351")
 	go c1.Run()
 	go c2.Run()
 	for {
 		select {
-		case <-ticker.C:
-			fmt.Printf("C1: %s: %02d:%02d\n", c1.state, int(c1.time.Minutes()), int(math.Mod(c1.time.Seconds(), 60)))
-			fmt.Printf("C2: %s: %02d:%02d\n", c2.state, int(c2.time.Minutes()), int(math.Mod(c2.time.Seconds(), 60)))
+		case data := <-c1ResCh:
+			fmt.Println("C1: " + data)
+		case data := <-c2ResCh:
+			fmt.Println("C2: " + data)
 		case <-sigs:
-			ticker.Stop()
 			fmt.Println("Exiting...")
 			os.Exit(0)
 		}
