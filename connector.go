@@ -7,6 +7,7 @@ import "net"
 import "bufio"
 
 import "github.com/UniversityRadioYork/ury-rapid-go/baps3protocol"
+import "github.com/UniversityRadioYork/ury-rapid-go/util"
 
 type Connector struct {
 	state     string
@@ -65,7 +66,7 @@ func (c *Connector) Run() {
 						os.Exit(1)
 					}
 					c.time = time
-					c.resCh <- PrettyDuration(time)
+					c.resCh <- util.PrettyDuration(time)
 				case "STATE":
 					c.state = line[1]
 					c.resCh <- line[1]
