@@ -17,13 +17,15 @@ type Connector struct {
 	buf       *bufio.Reader
 	resCh     chan<- string
 	reqCh     <-chan string
+	name      string
 }
 
-func InitConnector(reqCh <-chan string, resCh chan<- string) *Connector {
+func InitConnector(name string, resCh chan string) *Connector {
 	c := new(Connector)
 	c.tokeniser = baps3protocol.NewTokeniser()
 	c.resCh = resCh
-	c.reqCh = reqCh
+	c.reqCh = make(chan string)
+	c.name = name
 	return c
 }
 
@@ -66,10 +68,10 @@ func (c *Connector) Run() {
 						os.Exit(1)
 					}
 					c.time = time
-					c.resCh <- util.PrettyDuration(time)
+					c.resCh <- c.name + ": " + util.PrettyDuration(time)
 				case "STATE":
 					c.state = line[1]
-					c.resCh <- line[1]
+					c.resCh <- c.name + ": " + line[1]
 				}
 			}
 		case err := <-errCh:
