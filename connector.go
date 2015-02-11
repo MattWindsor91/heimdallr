@@ -6,8 +6,8 @@ import "os"
 import "net"
 import "bufio"
 
-import "github.com/UniversityRadioYork/ury-rapid-go/baps3protocol"
-import "github.com/UniversityRadioYork/ury-rapid-go/util"
+import "github.com/UniversityRadioYork/bifrost/baps3protocol"
+import "github.com/UniversityRadioYork/bifrost/util"
 
 type Connector struct {
 	state     string
