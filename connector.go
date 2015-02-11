@@ -1,10 +1,10 @@
 package main
 
 import "time"
-import "fmt"
-import "os"
 import "net"
 import "bufio"
+import "sync"
+import "log"
 
 import "github.com/UniversityRadioYork/bifrost/baps3protocol"
 import "github.com/UniversityRadioYork/bifrost/util"
@@ -16,24 +16,27 @@ type Connector struct {
 	conn      net.Conn
 	buf       *bufio.Reader
 	resCh     chan<- string
-	reqCh     <-chan string
+	ReqCh     chan string
 	name      string
+	wg        *sync.WaitGroup
+	logger    *log.Logger
 }
 
-func InitConnector(name string, resCh chan string) *Connector {
+func InitConnector(name string, resCh chan string, waitGroup *sync.WaitGroup, logger *log.Logger) *Connector {
 	c := new(Connector)
 	c.tokeniser = baps3protocol.NewTokeniser()
 	c.resCh = resCh
-	c.reqCh = make(chan string)
+	c.ReqCh = make(chan string)
 	c.name = name
+	c.wg = waitGroup
+	c.logger = logger
 	return c
 }
 
 func (c *Connector) Connect(hostport string) {
 	conn, err := net.Dial("tcp", hostport)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		c.logger.Fatal(err)
 	}
 	c.conn = conn
 	c.buf = bufio.NewReader(c.conn)
@@ -64,19 +67,28 @@ func (c *Connector) Run() {
 				case "TIME":
 					time, err := time.ParseDuration(line[1] + `us`)
 					if err != nil {
-						fmt.Println(err)
-						os.Exit(1)
+						c.logger.Println(err)
+					} else {
+						c.time = time
+						c.resCh <- c.name + ": " + util.PrettyDuration(time)
 					}
-					c.time = time
-					c.resCh <- c.name + ": " + util.PrettyDuration(time)
 				case "STATE":
 					c.state = line[1]
 					c.resCh <- c.name + ": " + line[1]
 				}
 			}
 		case err := <-errCh:
-			fmt.Println(err)
-			os.Exit(1)
+			c.logger.Fatal(err)
+		case _, ok := <-c.ReqCh:
+			if !ok {
+				c.logger.Println(c.name + " Connector shutting down")
+				err := c.conn.Close()
+				if err != nil {
+					c.logger.Println(err)
+				}
+				c.wg.Done()
+				return
+			}
 		}
 	}
 }

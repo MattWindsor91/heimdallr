@@ -6,6 +6,7 @@ import "syscall"
 import "fmt"
 import "log"
 import "io/ioutil"
+import "sync"
 
 import "github.com/BurntSushi/toml"
 
@@ -15,6 +16,12 @@ type server struct {
 
 type Config struct {
 	Servers map[string]server
+}
+
+func killConnectors(connectors []*Connector) {
+	for _, c := range connectors {
+		close(c.ReqCh)
+	}
 }
 
 func main() {
@@ -32,17 +39,26 @@ func main() {
 
 	resCh := make(chan string)
 
+	connectors := []*Connector{}
+
+	wg := new(sync.WaitGroup)
+
 	for name, s := range conf.Servers {
-		c := InitConnector(name, resCh)
+		c := InitConnector(name, resCh, wg, logger)
+		connectors = append(connectors, c)
 		c.Connect(s.Hostport)
 		go c.Run()
 	}
+	wg.Add(len(connectors))
+
 	for {
 		select {
 		case data := <-resCh:
 			fmt.Println(data)
 		case <-sigs:
-			fmt.Println("Exiting...")
+			killConnectors(connectors)
+			wg.Wait()
+			logger.Println("Exiting...")
 			os.Exit(0)
 		}
 	}
