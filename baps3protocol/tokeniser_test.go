@@ -131,7 +131,10 @@ func TestTokenise(t *testing.T) {
 
 	for _, c := range cases {
 		tok := NewTokeniser()
-		got := tok.Tokenise([]byte(c.in))
+		got, _, err := tok.Tokenise([]byte(c.in))
+		if err != nil {
+			t.Errorf("Tokenise(%q) gave error %q", c.in, err)
+		}
 		if !cmpLines(got, c.want) {
 			t.Errorf("Tokenise(%q) == %q, want %q", c.in, got, c.want)
 		}

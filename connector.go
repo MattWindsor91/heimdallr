@@ -62,7 +62,13 @@ func (c *Connector) Run() {
 			if err != nil {
 				errCh <- err
 			}
-			lineCh <- c.tokeniser.Tokenise(data)
+			// TODO(CaptainHayashi): more robust handling of an
+			// error from Tokenise?
+			lines, _, err := c.tokeniser.Tokenise(data)
+			if err != nil {
+				errCh <- err
+			}
+			lineCh <- lines
 		}
 	}(lineCh, errCh)
 
