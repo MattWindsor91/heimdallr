@@ -5,24 +5,24 @@ import (
 	"unicode"
 )
 
-// QuoteType represents one of the types of quoting used in the BAPS3 protocol.
-type QuoteType int
+// quoteType represents one of the types of quoting used in the BAPS3 protocol.
+type quoteType int
 
 const (
-	// None represents the state between quoted parts of a BAPS3 message.
-	None QuoteType = iota
+	// none represents the state between quoted parts of a BAPS3 message.
+	none quoteType = iota
 
-	// Single represents 'single quoted' parts of a BAPS3 message.
-	Single
+	// single represents 'single quoted' parts of a BAPS3 message.
+	single
 
-	// Double represents "double quoted" parts of a BAPS3 message.
-	Double
+	// double represents "double quoted" parts of a BAPS3 message.
+	double
 )
 
 // Tokeniser holds the state of a BAPS3 protocol tokeniser.
 type Tokeniser struct {
 	escape_next_char bool
-	quote_type       QuoteType
+	quote_type       quoteType
 	word             *bytes.Buffer
 	words            []string
 	lines            [][]string
@@ -32,7 +32,7 @@ type Tokeniser struct {
 func NewTokeniser() *Tokeniser {
 	t := new(Tokeniser)
 	t.escape_next_char = false
-	t.quote_type = None
+	t.quote_type = none
 	t.word = new(bytes.Buffer)
 	t.words = []string{}
 	t.lines = [][]string{}
@@ -82,12 +82,12 @@ func (t *Tokeniser) Tokenise(data []byte) [][]string {
 		}
 
 		switch t.quote_type {
-		case None:
+		case none:
 			switch b {
 			case '\'':
-				t.quote_type = Single
+				t.quote_type = single
 			case '"':
-				t.quote_type = Double
+				t.quote_type = double
 			case '\\':
 				t.escape_next_char = true
 			case '\n':
@@ -103,18 +103,18 @@ func (t *Tokeniser) Tokenise(data []byte) [][]string {
 				}
 			}
 
-		case Single:
+		case single:
 			switch b {
 			case '\'':
-				t.quote_type = None
+				t.quote_type = none
 			default:
 				t.word.WriteByte(b)
 			}
 
-		case Double:
+		case double:
 			switch b {
 			case '"':
-				t.quote_type = None
+				t.quote_type = none
 			case '\\':
 				t.escape_next_char = true
 			default:
