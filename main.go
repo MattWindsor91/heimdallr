@@ -1,14 +1,15 @@
 package main
 
-import "os"
-import "os/signal"
-import "syscall"
-import "fmt"
-import "log"
-import "io/ioutil"
-import "sync"
-
-import "github.com/BurntSushi/toml"
+import (
+	"fmt"
+	"github.com/BurntSushi/toml"
+	"io/ioutil"
+	"log"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
+)
 
 type server struct {
 	Hostport string

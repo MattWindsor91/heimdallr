@@ -1,13 +1,14 @@
 package main
 
-import "time"
-import "net"
-import "bufio"
-import "sync"
-import "log"
-
-import "github.com/UniversityRadioYork/bifrost/baps3protocol"
-import "github.com/UniversityRadioYork/bifrost/util"
+import (
+	"bufio"
+	"github.com/UniversityRadioYork/bifrost/baps3protocol"
+	"github.com/UniversityRadioYork/bifrost/util"
+	"log"
+	"net"
+	"sync"
+	"time"
+)
 
 type Connector struct {
 	state     string
