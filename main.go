@@ -15,6 +15,7 @@ type server struct {
 	Hostport string
 }
 
+// Config is a struct containing the configuration for an instance of Bifrost.
 type Config struct {
 	Servers map[string]server
 }

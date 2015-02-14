@@ -10,6 +10,7 @@ import (
 	"time"
 )
 
+// Connector is a struct containing the internal state of a BAPS3 connector.
 type Connector struct {
 	state     string
 	time      time.Duration
@@ -23,6 +24,10 @@ type Connector struct {
 	logger    *log.Logger
 }
 
+// InitConnector creates and returns a Connector.
+// The returned Connector shall have the given name, send responses through the
+// response channel resCh, report termination via the wait group waitGroup, and
+// log to logger.
 func InitConnector(name string, resCh chan string, waitGroup *sync.WaitGroup, logger *log.Logger) *Connector {
 	c := new(Connector)
 	c.tokeniser = baps3protocol.NewTokeniser()
@@ -34,6 +39,7 @@ func InitConnector(name string, resCh chan string, waitGroup *sync.WaitGroup, lo
 	return c
 }
 
+// Connect connects an existing Connector to the BAPS3 server at hostport.
 func (c *Connector) Connect(hostport string) {
 	conn, err := net.Dial("tcp", hostport)
 	if err != nil {
@@ -43,6 +49,7 @@ func (c *Connector) Connect(hostport string) {
 	c.buf = bufio.NewReader(c.conn)
 }
 
+// Run sets the given Connector off running.
 func (c *Connector) Run() {
 	lineCh := make(chan [][]string, 3)
 	errCh := make(chan error)
