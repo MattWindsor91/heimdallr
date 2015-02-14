@@ -218,6 +218,6 @@ func (m *Message) AsSlice() []string {
 // Pack outputs the given Message as raw bytes representing a BAPS3 message.
 // These bytes can be sent down a TCP connection to a BAPS3 server, providing
 // they are terminated using a line-feed character.
-func (m *Message) Pack() []byte {
+func (m *Message) Pack() ([]byte, error) {
 	return Pack(m.word.String(), m.args)
 }
