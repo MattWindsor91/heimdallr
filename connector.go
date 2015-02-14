@@ -70,21 +70,7 @@ func (c *Connector) Run() {
 	for {
 		select {
 		case lines := <-lineCh:
-			for _, line := range lines {
-				switch line[0] {
-				case "TIME":
-					time, err := time.ParseDuration(line[1] + `us`)
-					if err != nil {
-						c.logger.Println(err)
-					} else {
-						c.time = time
-						c.resCh <- c.name + ": " + util.PrettyDuration(time)
-					}
-				case "STATE":
-					c.state = line[1]
-					c.resCh <- c.name + ": " + line[1]
-				}
-			}
+			c.handleResponses(lines)
 		case err := <-errCh:
 			c.logger.Fatal(err)
 		case _, ok := <-c.ReqCh:
@@ -97,6 +83,25 @@ func (c *Connector) Run() {
 				c.wg.Done()
 				return
 			}
+		}
+	}
+}
+
+// handleResponses handles a series of response lines from the BAPS3 server.
+func (c *Connector) handleResponses(lines [][]string) {
+	for _, line := range lines {
+		switch line[0] {
+		case "TIME":
+			time, err := time.ParseDuration(line[1] + `us`)
+			if err != nil {
+				c.logger.Println(err)
+			} else {
+				c.time = time
+				c.resCh <- c.name + ": " + util.PrettyDuration(time)
+			}
+		case "STATE":
+			c.state = line[1]
+			c.resCh <- c.name + ": " + line[1]
 		}
 	}
 }
