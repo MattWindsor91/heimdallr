@@ -181,25 +181,33 @@ func LookupWord(word string) MessageWord {
 	return BadWord
 }
 
-type message struct {
+// Message is a structure representing a full BAPS3 message.
+// It is comprised of a word, which is stored as a MessageWord, and zero or
+// more string arguments.
+type Message struct {
 	word MessageWord
 	args []string
 }
 
 // NewMessage creates and returns a new Message with the given message word.
 // The message will initially have no arguments; use AddArg to add arguments.
-func NewMessage(word MessageWord) *message {
-	m := new(message)
+func NewMessage(word MessageWord) *Message {
+	m := new(Message)
 	m.word = word
 	return m
 }
 
-func (m *message) AddArg(arg string) *message {
+// AddArg adds the given argument to a Message in-place.
+// The given Message-pointer is returned, to allow for chaining.
+func (m *Message) AddArg(arg string) *Message {
 	m.args = append(m.args, arg)
 	return m
 }
 
-func (m *message) AsSlice() []string {
+// AsSlice outputs the given Message as a string slice.
+// The slice contains the string form of the Message's word in index 0, and
+// the arguments as index 1 upwards, if any.
+func (m *Message) AsSlice() []string {
 	slice := []string{m.word.String()}
 	for _, arg := range m.args {
 		slice = append(slice, arg)
@@ -207,6 +215,9 @@ func (m *message) AsSlice() []string {
 	return slice
 }
 
-func (m *message) Pack() []byte {
+// Pack outputs the given Message as raw bytes representing a BAPS3 message.
+// These bytes can be sent down a TCP connection to a BAPS3 server, providing
+// they are terminated using a line-feed character.
+func (m *Message) Pack() []byte {
 	return Pack(m.word.String(), m.args)
 }

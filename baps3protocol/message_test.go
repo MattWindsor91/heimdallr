@@ -45,7 +45,7 @@ func TestMessageWord(t *testing.T) {
 func TestMessage(t *testing.T) {
 	cases := []struct {
 		words []string
-		msg   *message
+		msg   *Message
 	}{
 		// Empty request
 		{[]string{"play"}, NewMessage(RqPlay)},
