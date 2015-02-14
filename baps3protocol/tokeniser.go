@@ -21,8 +21,8 @@ const (
 
 // Tokeniser holds the state of a BAPS3 protocol tokeniser.
 type Tokeniser struct {
-	escape_next_char bool
-	quote_type       quoteType
+	escapeNextChar   bool
+	currentQuoteType quoteType
 	word             *bytes.Buffer
 	words            []string
 	lines            [][]string
@@ -31,8 +31,8 @@ type Tokeniser struct {
 // NewTokeniser creates and returns a new, empty Tokeniser.
 func NewTokeniser() *Tokeniser {
 	t := new(Tokeniser)
-	t.escape_next_char = false
-	t.quote_type = none
+	t.escapeNextChar = false
+	t.currentQuoteType = none
 	t.word = new(bytes.Buffer)
 	t.words = []string{}
 	t.lines = [][]string{}
@@ -75,21 +75,21 @@ func (t *Tokeniser) endWord() {
 // word-strings.  Else, the slice shall be empty.
 func (t *Tokeniser) Tokenise(data []byte) [][]string {
 	for _, b := range data {
-		if t.escape_next_char {
+		if t.escapeNextChar {
 			t.word.WriteByte(b)
-			t.escape_next_char = false
+			t.escapeNextChar = false
 			continue
 		}
 
-		switch t.quote_type {
+		switch t.currentQuoteType {
 		case none:
 			switch b {
 			case '\'':
-				t.quote_type = single
+				t.currentQuoteType = single
 			case '"':
-				t.quote_type = double
+				t.currentQuoteType = double
 			case '\\':
-				t.escape_next_char = true
+				t.escapeNextChar = true
 			case '\n':
 				t.endLine()
 			default:
@@ -106,7 +106,7 @@ func (t *Tokeniser) Tokenise(data []byte) [][]string {
 		case single:
 			switch b {
 			case '\'':
-				t.quote_type = none
+				t.currentQuoteType = none
 			default:
 				t.word.WriteByte(b)
 			}
@@ -114,9 +114,9 @@ func (t *Tokeniser) Tokenise(data []byte) [][]string {
 		case double:
 			switch b {
 			case '"':
-				t.quote_type = none
+				t.currentQuoteType = none
 			case '\\':
-				t.escape_next_char = true
+				t.escapeNextChar = true
 			default:
 				t.word.WriteByte(b)
 			}

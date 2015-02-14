@@ -2,8 +2,8 @@ package baps3protocol
 
 import "testing"
 
-// cmp_words is defined in tokeniser_test.
-// TODO(CaptainHayashi): move cmp_words elsewhere?
+// cmpWords is defined in tokeniser_test.
+// TODO(CaptainHayashi): move cmpWords elsewhere?
 
 func TestMessageWord(t *testing.T) {
 	cases := []struct {
@@ -67,7 +67,7 @@ func TestMessage(t *testing.T) {
 
 	for _, c := range cases {
 		gotslice := c.msg.AsSlice()
-		if !cmp_words(gotslice, c.words) {
+		if !cmpWords(gotslice, c.words) {
 			t.Errorf("%q.ToSlice() == %q, want %q", c.msg, gotslice, c.words)
 		}
 	}
