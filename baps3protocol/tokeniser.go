@@ -5,14 +5,21 @@ import (
 	"unicode"
 )
 
+// QuoteType represents one of the types of quoting used in the BAPS3 protocol.
 type QuoteType int
 
 const (
+	// None represents the state between quoted parts of a BAPS3 message.
 	None QuoteType = iota
+
+	// Single represents 'single quoted' parts of a BAPS3 message.
 	Single
+
+	// Double represents "double quoted" parts of a BAPS3 message.
 	Double
 )
 
+// Tokeniser holds the state of a BAPS3 protocol tokeniser.
 type Tokeniser struct {
 	escape_next_char bool
 	quote_type       QuoteType
@@ -21,6 +28,7 @@ type Tokeniser struct {
 	lines            [][]string
 }
 
+// NewTokeniser creates and returns a new, empty Tokeniser.
 func NewTokeniser() *Tokeniser {
 	t := new(Tokeniser)
 	t.escape_next_char = false
@@ -61,6 +69,10 @@ func (t *Tokeniser) endWord() {
 	t.word.Truncate(0)
 }
 
+// Tokenise feeds raw bytes into a Tokeniser.
+// If the bytes include the ending of one or more command lines, those lines
+// shall be returned, as a slice of lines represented as slices of
+// word-strings.  Else, the slice shall be empty.
 func (t *Tokeniser) Tokenise(data []byte) [][]string {
 	for _, b := range data {
 		if t.escape_next_char {
