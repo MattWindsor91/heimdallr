@@ -1,14 +1,16 @@
 package main
 
-import "time"
-import "net"
-import "bufio"
-import "sync"
-import "log"
+import (
+	"bufio"
+	"github.com/UniversityRadioYork/bifrost/baps3protocol"
+	"github.com/UniversityRadioYork/bifrost/util"
+	"log"
+	"net"
+	"sync"
+	"time"
+)
 
-import "github.com/UniversityRadioYork/bifrost/baps3protocol"
-import "github.com/UniversityRadioYork/bifrost/util"
-
+// Connector is a struct containing the internal state of a BAPS3 connector.
 type Connector struct {
 	state     string
 	time      time.Duration
@@ -22,6 +24,10 @@ type Connector struct {
 	logger    *log.Logger
 }
 
+// InitConnector creates and returns a Connector.
+// The returned Connector shall have the given name, send responses through the
+// response channel resCh, report termination via the wait group waitGroup, and
+// log to logger.
 func InitConnector(name string, resCh chan string, waitGroup *sync.WaitGroup, logger *log.Logger) *Connector {
 	c := new(Connector)
 	c.tokeniser = baps3protocol.NewTokeniser()
@@ -33,6 +39,7 @@ func InitConnector(name string, resCh chan string, waitGroup *sync.WaitGroup, lo
 	return c
 }
 
+// Connect connects an existing Connector to the BAPS3 server at hostport.
 func (c *Connector) Connect(hostport string) {
 	conn, err := net.Dial("tcp", hostport)
 	if err != nil {
@@ -42,6 +49,7 @@ func (c *Connector) Connect(hostport string) {
 	c.buf = bufio.NewReader(c.conn)
 }
 
+// Run sets the given Connector off running.
 func (c *Connector) Run() {
 	lineCh := make(chan [][]string, 3)
 	errCh := make(chan error)
@@ -54,7 +62,13 @@ func (c *Connector) Run() {
 			if err != nil {
 				errCh <- err
 			}
-			lineCh <- c.tokeniser.Tokenise(data)
+			// TODO(CaptainHayashi): more robust handling of an
+			// error from Tokenise?
+			lines, _, err := c.tokeniser.Tokenise(data)
+			if err != nil {
+				errCh <- err
+			}
+			lineCh <- lines
 		}
 	}(lineCh, errCh)
 
@@ -62,21 +76,7 @@ func (c *Connector) Run() {
 	for {
 		select {
 		case lines := <-lineCh:
-			for _, line := range lines {
-				switch line[0] {
-				case "TIME":
-					time, err := time.ParseDuration(line[1] + `us`)
-					if err != nil {
-						c.logger.Println(err)
-					} else {
-						c.time = time
-						c.resCh <- c.name + ": " + util.PrettyDuration(time)
-					}
-				case "STATE":
-					c.state = line[1]
-					c.resCh <- c.name + ": " + line[1]
-				}
-			}
+			c.handleResponses(lines)
 		case err := <-errCh:
 			c.logger.Fatal(err)
 		case _, ok := <-c.ReqCh:
@@ -89,6 +89,25 @@ func (c *Connector) Run() {
 				c.wg.Done()
 				return
 			}
+		}
+	}
+}
+
+// handleResponses handles a series of response lines from the BAPS3 server.
+func (c *Connector) handleResponses(lines [][]string) {
+	for _, line := range lines {
+		switch line[0] {
+		case "TIME":
+			time, err := time.ParseDuration(line[1] + `us`)
+			if err != nil {
+				c.logger.Println(err)
+			} else {
+				c.time = time
+				c.resCh <- c.name + ": " + util.PrettyDuration(time)
+			}
+		case "STATE":
+			c.state = line[1]
+			c.resCh <- c.name + ": " + line[1]
 		}
 	}
 }

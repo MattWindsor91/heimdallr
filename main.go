@@ -1,19 +1,21 @@
 package main
 
-import "os"
-import "os/signal"
-import "syscall"
-import "fmt"
-import "log"
-import "io/ioutil"
-import "sync"
-
-import "github.com/BurntSushi/toml"
+import (
+	"fmt"
+	"github.com/BurntSushi/toml"
+	"io/ioutil"
+	"log"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
+)
 
 type server struct {
 	Hostport string
 }
 
+// Config is a struct containing the configuration for an instance of Bifrost.
 type Config struct {
 	Servers map[string]server
 }

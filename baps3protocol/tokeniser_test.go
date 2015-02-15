@@ -4,13 +4,13 @@ import (
 	"testing"
 )
 
-func cmp_lines(a [][]string, b [][]string) bool {
+func cmpLines(a [][]string, b [][]string) bool {
 	if len(a) != len(b) {
 		return false
 	}
 
 	for i, aline := range a {
-		if !cmp_words(aline, b[i]) {
+		if !cmpWords(aline, b[i]) {
 			return false
 		}
 	}
@@ -18,7 +18,7 @@ func cmp_lines(a [][]string, b [][]string) bool {
 	return true
 }
 
-func cmp_words(a []string, b []string) bool {
+func cmpWords(a []string, b []string) bool {
 	if len(a) != len(b) {
 		return false
 	}
@@ -131,8 +131,11 @@ func TestTokenise(t *testing.T) {
 
 	for _, c := range cases {
 		tok := NewTokeniser()
-		got := tok.Tokenise([]byte(c.in))
-		if !cmp_lines(got, c.want) {
+		got, _, err := tok.Tokenise([]byte(c.in))
+		if err != nil {
+			t.Errorf("Tokenise(%q) gave error %q", c.in, err)
+		}
+		if !cmpLines(got, c.want) {
 			t.Errorf("Tokenise(%q) == %q, want %q", c.in, got, c.want)
 		}
 	}

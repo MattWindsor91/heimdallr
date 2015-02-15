@@ -61,7 +61,10 @@ func TestPack(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		got := Pack(c.word, c.args)
+		got, err := Pack(c.word, c.args)
+		if err != nil {
+			t.Errorf("Pack(%q, %q) encountered error %q", c.word, c.args, err)
+		}
 		if !cmpByteSlices(c.want, got) {
 			t.Errorf("Pack(%q, %q) == %q, want %q", c.word, c.args, got, c.want)
 		}

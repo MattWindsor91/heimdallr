@@ -8,9 +8,17 @@ import (
 
 // Pack a command word and 0+ args into a slice of bytes ready for sending.
 // Args will be single quote escaped if they contain ' " \ or whitespace
-func Pack(word string, args []string) []byte {
+// Pack may return an error if the resulting byte-slice is too large.
+func Pack(word string, args []string) (packed []byte, err error) {
+	packed, err = []byte{}, nil
+
 	output := new(bytes.Buffer)
-	output.WriteString(word)
+
+	_, err = output.WriteString(word)
+	if err != nil {
+		return
+	}
+
 	for _, a := range args {
 		// Escape arg if needed
 		for _, c := range a {
@@ -19,9 +27,15 @@ func Pack(word string, args []string) []byte {
 				break
 			}
 		}
-		output.WriteString(" " + a)
+
+		_, err = output.WriteString(" " + a)
+		if err != nil {
+			return
+		}
 	}
-	return output.Bytes()
+
+	packed = output.Bytes()
+	return
 }
 
 func escapeArgument(input string) (output string) {

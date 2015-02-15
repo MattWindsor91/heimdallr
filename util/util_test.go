@@ -1,7 +1,9 @@
 package util
 
-import "testing"
-import "time"
+import (
+	"testing"
+	"time"
+)
 
 func TestUtil(t *testing.T) {
 	cases := []struct {
