@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"sync"
@@ -76,10 +77,14 @@ func main() {
 	}
 	wg.Add(len(connectors))
 
+	mux := initHTTP()
+	go http.ListenAndServe(":3000", mux)
+
 	for {
 		select {
 		case data := <-resCh:
 			fmt.Println(data.String())
+			wsbroadcast(data.String())
 		case <-sigs:
 			killConnectors(connectors)
 			wg.Wait()
