@@ -70,5 +70,9 @@ func TestMessage(t *testing.T) {
 		if !cmpWords(gotslice, c.words) {
 			t.Errorf("%q.ToSlice() == %q, want %q", c.msg, gotslice, c.words)
 		}
+		gotword := LookupWord(c.words[0])
+		if gotword != c.msg.Word() {
+			t.Errorf("LookupWord(%q) == %q, but Word() == %q", c.words[0], gotword, c.msg.Word())
+		}
 	}
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"log"
 	"net"
 	"sync"
@@ -93,21 +94,58 @@ func (c *Connector) Run() {
 	}
 }
 
+// lineToMessage constructs a Message struct from a line of word-strings.
+func lineToMessage(line []string) (msg *baps3protocol.Message, err error) {
+	if len(line) == 0 {
+		err = fmt.Errorf("cannot construct message from zero words")
+	} else {
+		msg = baps3protocol.NewMessage(baps3protocol.LookupWord(line[0]))
+		for _, word := range line[1:] {
+			msg.AddArg(word)
+		}
+	}
+
+	return
+}
+
 // handleResponses handles a series of response lines from the BAPS3 server.
 func (c *Connector) handleResponses(lines [][]string) {
 	for _, line := range lines {
-		switch line[0] {
-		case "TIME":
-			time, err := time.ParseDuration(line[1] + `us`)
+		msg, err := lineToMessage(line)
+		if err != nil {
+			c.logger.Println(err)
+			continue
+		}
+
+		if msg.Word().IsUnknown() {
+			continue
+		}
+
+		switch msg.Word() {
+		case baps3protocol.RsTime:
+			timestr, err := msg.Arg(0)
 			if err != nil {
 				c.logger.Println(err)
-			} else {
-				c.time = time
-				c.resCh <- c.name + ": " + util.PrettyDuration(time)
+				break
 			}
-		case "STATE":
-			c.state = line[1]
-			c.resCh <- c.name + ": " + line[1]
+
+			time, err := time.ParseDuration(timestr + `us`)
+			if err != nil {
+				c.logger.Println(err)
+				break
+			}
+
+			c.time = time
+			c.resCh <- c.name + ": " + util.PrettyDuration(time)
+		case baps3protocol.RsState:
+			statestr, err := msg.Arg(0)
+			if err != nil {
+				c.logger.Println(err)
+				break
+			}
+
+			c.state = statestr
+			c.resCh <- c.name + ": " + statestr
 		}
 	}
 }
