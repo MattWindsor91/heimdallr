@@ -21,6 +21,7 @@ const (
 
 // Tokeniser holds the state of a BAPS3 protocol tokeniser.
 type Tokeniser struct {
+	inWord           bool
 	escapeNextChar   bool
 	currentQuoteType quoteType
 	word             *bytes.Buffer
@@ -35,6 +36,7 @@ func NewTokeniser() *Tokeniser {
 	t.escapeNextChar = false
 	t.currentQuoteType = none
 	t.word = new(bytes.Buffer)
+	t.inWord = false
 	t.words = []string{}
 	t.lines = [][]string{}
 	t.err = nil
@@ -50,7 +52,7 @@ func (t *Tokeniser) endLine() {
 }
 
 func (t *Tokeniser) endWord() {
-	if t.word.Len() == 0 {
+	if !t.inWord {
 		// Don't add an empty word.
 		return
 	}
@@ -69,6 +71,7 @@ func (t *Tokeniser) endWord() {
 
 	t.words = append(t.words, string(uword))
 	t.word.Truncate(0)
+	t.inWord = false
 }
 
 // Tokenise feeds raw bytes into a Tokeniser.
@@ -120,8 +123,14 @@ func (t *Tokeniser) Tokenise(data []byte) (lines [][]string, count uint64, err e
 func (t *Tokeniser) tokeniseNoQuotes(b byte) {
 	switch b {
 	case '\'':
+		// Switching into single quotes mode starts a word.
+		// This is to allow '' to represent the empty string.
+		t.inWord = true
 		t.currentQuoteType = single
 	case '"':
+		// Switching into double quotes mode starts a word.
+		// This is to allow "" to represent the empty string.
+		t.inWord = true
 		t.currentQuoteType = double
 	case '\\':
 		t.escapeNextChar = true
@@ -166,4 +175,5 @@ func (t *Tokeniser) tokeniseDoubleQuotes(b byte) {
 // Tokeniser's user.
 func (t *Tokeniser) put(b byte) {
 	t.err = t.word.WriteByte(b)
+	t.inWord = true
 }

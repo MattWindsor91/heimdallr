@@ -37,71 +37,114 @@ func TestTokenise(t *testing.T) {
 	// For now, only test one complete line at a time.
 	// TODO(CaptainHayashi): add partial-line tests.
 
-	// Tests adapted from:
-	// https://github.com/UniversityRadioYork/baps3-protocol.rs
-	// (src/proto/unpack.rs)
+	// Tests adapted from (and labelled with respect to):
+	// http://universityradioyork.github.io/baps3-spec/comms/internal/protocol.html#examples
 
 	cases := []struct {
 		in   string
 		want [][]string
 	}{
-		// Empty string and empty line
+		// E1 - empty string
 		{
 			"",
 			[][]string{},
 		},
+		// E2 - empty line
 		{
 			"\n",
 			[][]string{[]string{}},
 		},
-		// Inter-word whitespace
+		// E3 - empty single-quoted string
+		{
+			"''\n",
+			[][]string{[]string{""}},
+		},
+		// E4 - empty double-quoted string
+		{
+			"\"\"\n",
+			[][]string{[]string{""}},
+		},
+		// W1 - space-delimited words
 		{
 			"foo bar baz\n",
 			[][]string{[]string{"foo", "bar", "baz"}},
 		},
+		// W2 - tab-delimited words
 		{
 			"fizz\tbuzz\tpoo\n",
 			[][]string{[]string{"fizz", "buzz", "poo"}},
 		},
-		// CRLF tolerance
+		// W3 - oddly-delimited words
+		{
+			"bibbity\rbobbity\rboo\n",
+			[][]string{[]string{"bibbity", "bobbity", "boo"}},
+		},
+		// W4 - CRLF tolerance
 		{
 			"silly windows\r\n",
 			[][]string{[]string{"silly", "windows"}},
 		},
-		// Leading and trailing whitespace
+		// W5 - leading whitespace
 		{
 			"     abc def\n",
 			[][]string{[]string{"abc", "def"}},
 		},
+		// W6 - trailing whitespace
 		{
 			"ghi jkl     \n",
 			[][]string{[]string{"ghi", "jkl"}},
 		},
+		// W7 - surrounding whitespace
 		{
 			"     mno pqr     \n",
 			[][]string{[]string{"mno", "pqr"}},
 		},
-		// Sample BAPS3 command, with double-quoted Windows path
-		{
-			`enqueue file "C:\\Users\\Test\\Artist - Title.mp3" 1` + "\n",
-			[][]string{
-				[]string{"enqueue", "file", `C:\Users\Test\Artist - Title.mp3`, "1"},
-			},
-		},
-		// Escaped newline
+		// Q1 - backslash escaping
 		{
 			"abc\\\ndef\n",
 			[][]string{[]string{"abc\ndef"}},
 		},
+		// Q2 - double-quoting
 		{
 			"\"abc\ndef\"\n",
 			[][]string{[]string{"abc\ndef"}},
 		},
+		// Q3 - double-quoting, backslash-escape
+		{
+			"\"abc\\\ndef\"\n",
+			[][]string{[]string{"abc\ndef"}},
+		},
+		// Q4 - single-quoting
 		{
 			"'abc\ndef'\n",
 			[][]string{[]string{"abc\ndef"}},
 		},
-		// Multiple lines
+		// Q5 - single-quoting, backslash-'escape'
+		{
+			"'abc\\\ndef'\n",
+			[][]string{[]string{"abc\\\ndef"}},
+		},
+		// Q6 - backslash-escaped double quote
+		{
+			"Scare\\\" quotes\\\"\n",
+			[][]string{[]string{"Scare\"", "quotes\""}},
+		},
+		// Q7 - backslash-escaped single quote
+		{
+			"I\\'m free\n",
+			[][]string{[]string{"I'm", "free"}},
+		},
+		// Q8 - single-quoted single quote
+		{
+			`'hello, I'\''m an escaped single quote'` + "\n",
+			[][]string{[]string{"hello, I'm an escaped single quote"}},
+		},
+		// Q9 - double-quoted single quote
+		{
+			`"hello, this is an \" escaped double quote"` + "\n",
+			[][]string{[]string{`hello, this is an " escaped double quote`}},
+		},
+		// M1 - multiple lines
 		{
 			"first line\nsecond line\n",
 			[][]string{
@@ -109,23 +152,25 @@ func TestTokenise(t *testing.T) {
 				[]string{"second", "line"},
 			},
 		},
-		// Single-quote escaping
-		{
-			`'hello, I'\''m an escaped single quote'` + "\n",
-			[][]string{[]string{"hello, I'm an escaped single quote"}},
-		},
-		// UTF-8
+		// U1 - UTF-8
 		{
 			"北野 武\n",
 			[][]string{[]string{"北野", "武"}},
 		},
-		// Not UTF-8 (ISO-8859-1).
+		// U2 - Not UTF-8 (ISO-8859-1).
 		// Should replace bad byte with the Unicode replacement
 		// character.  See example at:
 		// https://en.wikipedia.org/wiki/Unicode_replacement_character
 		{
 			"f\xfcr\n",
 			[][]string{[]string{"f\xef\xbf\xbdr"}},
+		},
+		// X1 - Sample BAPS3 command, with double-quoted Windows path
+		{
+			`enqueue file "C:\\Users\\Test\\Artist - Title.mp3" 1` + "\n",
+			[][]string{
+				[]string{"enqueue", "file", `C:\Users\Test\Artist - Title.mp3`, "1"},
+			},
 		},
 	}
 
