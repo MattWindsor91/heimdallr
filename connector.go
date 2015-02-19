@@ -100,8 +100,8 @@ func lineToMessage(line []string) (msg *baps3protocol.Message, err error) {
 		err = fmt.Errorf("cannot construct message from zero words")
 	} else {
 		msg = baps3protocol.NewMessage(baps3protocol.LookupWord(line[0]))
-		for _, word := range line[1:] {
-			msg.AddArg(word)
+		for _, arg := range line[1:] {
+			msg.AddArg(arg)
 		}
 	}
 
