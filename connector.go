@@ -2,12 +2,12 @@ package main
 
 import (
 	"bufio"
-	"github.com/UniversityRadioYork/bifrost/baps3protocol"
-	"github.com/UniversityRadioYork/bifrost/util"
 	"log"
 	"net"
 	"sync"
 	"time"
+	"ury.org.uk/code/bifrost/baps3protocol"
+	"ury.org.uk/code/bifrost/util"
 )
 
 // Connector is a struct containing the internal state of a BAPS3 connector.
