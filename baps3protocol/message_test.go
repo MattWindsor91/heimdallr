@@ -75,4 +75,28 @@ func TestMessage(t *testing.T) {
 			t.Errorf("LookupWord(%q) == %q, but Word() == %q", c.words[0], gotword, c.msg.Word())
 		}
 	}
+
+	// And now, test args.
+	// TODO(CaptainHayashi): refactor the above to integrate this test
+	args := []string{"bibbity", "bobbity", "boo"}
+	msg := NewMessage(RsUnknown)
+	for _, arg := range args {
+		msg.AddArg(arg)
+	}
+
+	// Bounds checking
+	for _, i := range []int{-1, len(args)} {
+		if _, err := msg.Arg(i); err == nil {
+			t.Errorf("Managed to get %dth arg of a %d-arged Message", i, len(args))
+		}
+	}
+
+	for i, want := range args {
+		got, err := msg.Arg(i)
+		if err != nil {
+			t.Errorf("unexpected error with Arg(%d)", i)
+		} else if got != want {
+			t.Errorf("Arg(%d) = %q, want %q", i, got, want)
+		}
+	}
 }
