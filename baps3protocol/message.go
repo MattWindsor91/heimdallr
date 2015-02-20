@@ -1,6 +1,9 @@
 package baps3protocol
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 // MessageWord is a token representing a message word known to Bifrost.
 // While the BAPS3 API allows for arbitrarily many message words to exist, we
@@ -220,4 +223,23 @@ func (m *Message) AsSlice() []string {
 // they are terminated using a line-feed character.
 func (m *Message) Pack() ([]byte, error) {
 	return Pack(m.word.String(), m.args)
+}
+
+// Word returns the MessageWord of the given Message.
+func (m *Message) Word() MessageWord {
+	return m.word
+}
+
+// Arg returns the index-th argument of the given Message.
+// The first argument is argument 0.
+// If the argument does not exist, an error is returned via err.
+func (m *Message) Arg(index int) (arg string, err error) {
+	if index < 0 {
+		err = fmt.Errorf("Arg got negative index %d", index)
+	} else if len(m.args) <= index {
+		err = fmt.Errorf("wanted argument %d, only %d arguments", index, len(m.args))
+	} else {
+		arg = m.args[index]
+	}
+	return
 }
