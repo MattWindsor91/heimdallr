@@ -10,7 +10,7 @@ import (
 	"syscall"
 
 	"github.com/BurntSushi/toml"
-	"github.com/UniversityRadioYork/bifrost/baps3"
+	baps3 "github.com/UniversityRadioYork/baps3-go"
 )
 
 type server struct {
