@@ -1,11 +1,10 @@
-package main
+package baps3protocol
 
 import (
 	"bufio"
 	"fmt"
-	"github.com/UniversityRadioYork/bifrost/baps3protocol"
-	"github.com/UniversityRadioYork/bifrost/util"
 	"log"
+	"math"
 	"net"
 	"sync"
 	"time"
@@ -15,7 +14,7 @@ import (
 type Connector struct {
 	state     string
 	time      time.Duration
-	tokeniser *baps3protocol.Tokeniser
+	tokeniser *Tokeniser
 	conn      net.Conn
 	buf       *bufio.Reader
 	resCh     chan<- string
@@ -31,7 +30,7 @@ type Connector struct {
 // log to logger.
 func InitConnector(name string, resCh chan string, waitGroup *sync.WaitGroup, logger *log.Logger) *Connector {
 	c := new(Connector)
-	c.tokeniser = baps3protocol.NewTokeniser()
+	c.tokeniser = NewTokeniser()
 	c.resCh = resCh
 	c.ReqCh = make(chan string)
 	c.name = name
@@ -95,11 +94,11 @@ func (c *Connector) Run() {
 }
 
 // lineToMessage constructs a Message struct from a line of word-strings.
-func lineToMessage(line []string) (msg *baps3protocol.Message, err error) {
+func lineToMessage(line []string) (msg *Message, err error) {
 	if len(line) == 0 {
 		err = fmt.Errorf("cannot construct message from zero words")
 	} else {
-		msg = baps3protocol.NewMessage(baps3protocol.LookupWord(line[0]))
+		msg = NewMessage(LookupWord(line[0]))
 		for _, arg := range line[1:] {
 			msg.AddArg(arg)
 		}
@@ -122,7 +121,7 @@ func (c *Connector) handleResponses(lines [][]string) {
 		}
 
 		switch msg.Word() {
-		case baps3protocol.RsTime:
+		case RsTime:
 			timestr, err := msg.Arg(0)
 			if err != nil {
 				c.logger.Println(err)
@@ -136,8 +135,8 @@ func (c *Connector) handleResponses(lines [][]string) {
 			}
 
 			c.time = time
-			c.resCh <- c.name + ": " + util.PrettyDuration(time)
-		case baps3protocol.RsState:
+			c.resCh <- c.name + ": " + PrettyDuration(time)
+		case RsState:
 			statestr, err := msg.Arg(0)
 			if err != nil {
 				c.logger.Println(err)
@@ -148,4 +147,10 @@ func (c *Connector) handleResponses(lines [][]string) {
 			c.resCh <- c.name + ": " + statestr
 		}
 	}
+}
+
+// PrettyDuration pretty-prints a duration in the form minutes:seconds.
+// The seconds part is zero-padded; the minutes part is not.
+func PrettyDuration(dur time.Duration) string {
+	return fmt.Sprintf("%d:%02d", int(dur.Minutes()), int(math.Mod(dur.Seconds(), 60)))
 }
