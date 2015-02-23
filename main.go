@@ -2,13 +2,15 @@ package main
 
 import (
 	"fmt"
-	"github.com/BurntSushi/toml"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
+
+	"github.com/BurntSushi/toml"
+	"github.com/UniversityRadioYork/bifrost/baps3"
 )
 
 type server struct {
@@ -20,7 +22,7 @@ type Config struct {
 	Servers map[string]server
 }
 
-func killConnectors(connectors []*Connector) {
+func killConnectors(connectors []*baps3.Connector) {
 	for _, c := range connectors {
 		close(c.ReqCh)
 	}
@@ -41,12 +43,12 @@ func main() {
 
 	resCh := make(chan string)
 
-	connectors := []*Connector{}
+	connectors := []*baps3.Connector{}
 
 	wg := new(sync.WaitGroup)
 
 	for name, s := range conf.Servers {
-		c := InitConnector(name, resCh, wg, logger)
+		c := baps3.InitConnector(name, resCh, wg, logger)
 		connectors = append(connectors, c)
 		c.Connect(s.Hostport)
 		go c.Run()

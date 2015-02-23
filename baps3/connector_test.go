@@ -1,4 +1,4 @@
-package util
+package baps3
 
 import (
 	"testing"
