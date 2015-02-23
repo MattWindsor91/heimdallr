@@ -1,4 +1,4 @@
-package baps3protocol
+package baps3
 
 import (
 	"bufio"
