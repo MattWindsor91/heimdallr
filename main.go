@@ -30,11 +30,11 @@ func killConnectors(connectors []*baps3.Connector) {
 
 func main() {
 	logger := log.New(os.Stdout, "[-] ", log.Lshortfile)
-	var conf Config
 	conffile, err := ioutil.ReadFile("conf_example.toml")
 	if err != nil {
 		logger.Fatal(err)
 	}
+	var conf Config
 	if _, err := toml.Decode(string(conffile), &conf); err != nil {
 		logger.Fatal(err)
 	}
