@@ -30,7 +30,7 @@ func killConnectors(connectors []*baps3.Connector) {
 
 func main() {
 	logger := log.New(os.Stdout, "[-] ", log.Lshortfile)
-	conffile, err := ioutil.ReadFile("conf_example.toml")
+	conffile, err := ioutil.ReadFile("config.toml") //TODO: make this an argument
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -41,7 +41,7 @@ func main() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT)
 
-	resCh := make(chan string)
+	resCh := make(chan baps3.Message)
 
 	connectors := []*baps3.Connector{}
 
@@ -58,7 +58,7 @@ func main() {
 	for {
 		select {
 		case data := <-resCh:
-			fmt.Println(data)
+			fmt.Println(data.String())
 		case <-sigs:
 			killConnectors(connectors)
 			wg.Wait()
