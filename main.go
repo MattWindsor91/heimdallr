@@ -19,9 +19,14 @@ type server struct {
 	Hostport string
 }
 
+type httpServer struct {
+	Hostport string
+}
+
 // Config is a struct containing the configuration for an instance of Bifrost.
 type Config struct {
 	Servers map[string]server
+	Http httpServer
 }
 
 func killConnectors(connectors []*baps3.Connector) {
@@ -79,7 +84,7 @@ func main() {
 
 	mux := initHTTP()
 	go func() {
-		err := http.ListenAndServe(":3000", mux)
+		err := http.ListenAndServe(conf.Http.Hostport, mux)
 		if err != nil {
 			logger.Println(err)
 		}
