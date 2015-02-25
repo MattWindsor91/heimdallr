@@ -10,7 +10,8 @@ import (
 	"syscall"
 
 	"github.com/BurntSushi/toml"
-	baps3 "github.com/UniversityRadioYork/baps3-go"
+	"github.com/UniversityRadioYork/baps3-go"
+	"github.com/docopt/docopt-go"
 )
 
 type server struct {
@@ -27,10 +28,30 @@ func killConnectors(connectors []*baps3.Connector) {
 		close(c.ReqCh)
 	}
 }
+func parseArgs() (args map[string]interface{}, err error) {
+	usage := `bifrost.
+
+Usage:
+  bifrost [-c <configfile>]
+  bifrost -h
+  bifrost -v
+
+Options:
+  -c --config=<configfile>    Path to bifrost config file [default: config.toml].
+  -h --help                   Show this help message.
+  -v --version                Show version.`
+
+	args, err = docopt.Parse(usage, nil, true, "bifrost 0.0", false)
+	return
+}
 
 func main() {
 	logger := log.New(os.Stdout, "[-] ", log.Lshortfile)
-	conffile, err := ioutil.ReadFile("config.toml") //TODO: make this an argument
+	args, err := parseArgs()
+	if err != nil {
+		logger.Fatal("Error parsing args: " + err.Error())
+	}
+	conffile, err := ioutil.ReadFile(args["--config"].(string))
 	if err != nil {
 		logger.Fatal(err)
 	}
