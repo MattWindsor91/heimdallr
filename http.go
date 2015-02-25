@@ -1,9 +1,12 @@
 package main
 
-import "net/http"
-import "fmt"
+import (
+	"bufio"
+	"fmt"
+	"net/http"
 
-import "github.com/gorilla/websocket"
+	"github.com/gorilla/websocket"
+)
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
@@ -36,9 +39,32 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func initHTTP() *http.ServeMux {
+func initHTTP(connectors []*bfConnector) *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.Handle("/", http.FileServer(http.Dir("static")))
 	mux.HandleFunc("/ws", wsHandler)
+
+	for i := range connectors {
+		connector := connectors[i]
+		mux.HandleFunc("/"+connector.name, func(w http.ResponseWriter, r *http.Request) {
+			bio := bufio.NewWriter(w)
+
+			resCh := make(chan string)
+
+			fmt.Printf("sending request to %s\n", connector.name)
+
+			connector.reqCh <- httpRequest{
+				r,
+				resCh,
+			}
+
+			select {
+			case res := <-resCh:
+				bio.WriteString(res + "\n")
+				bio.Flush()
+			}
+		})
+	}
+
 	return mux
 }
