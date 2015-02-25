@@ -78,7 +78,12 @@ func main() {
 	wg.Add(len(connectors))
 
 	mux := initHTTP()
-	go http.ListenAndServe(":3000", mux)
+	go func() {
+		err := http.ListenAndServe(":3000", mux)
+		if err != nil {
+			logger.Println(err)
+		}
+	}()
 
 	for {
 		select {
