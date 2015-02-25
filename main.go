@@ -82,13 +82,7 @@ func main() {
 	}
 	wg.Add(len(connectors))
 
-	mux := initHTTP()
-	go func() {
-		err := http.ListenAndServe(conf.Http.Hostport, mux)
-		if err != nil {
-			logger.Println(err)
-		}
-	}()
+	initAndStartHTTP(conf.Http, logger)
 
 	for {
 		select {
@@ -102,4 +96,14 @@ func main() {
 			os.Exit(0)
 		}
 	}
+}
+
+func initAndStartHTTP(conf httpServer, logger *log.Logger) {
+	mux := initHTTP()
+	go func() {
+		err := http.ListenAndServe(conf.Hostport, mux)
+		if err != nil {
+			logger.Println(err)
+		}
+	}()
 }
