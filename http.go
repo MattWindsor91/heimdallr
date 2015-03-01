@@ -39,6 +39,13 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type httpRequest struct {
+	raw *http.Request
+
+	// TODO(CaptainHayashi): richer response than a string.
+	resCh chan<- string
+}
+
 func initHTTP(connectors []*bfConnector) *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.Handle("/", http.FileServer(http.Dir("static")))
