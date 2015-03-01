@@ -45,26 +45,37 @@ func initHTTP(connectors []*bfConnector) *http.ServeMux {
 	mux.HandleFunc("/ws", wsHandler)
 
 	for i := range connectors {
-		connector := connectors[i]
-		mux.HandleFunc("/"+connector.name, func(w http.ResponseWriter, r *http.Request) {
-			bio := bufio.NewWriter(w)
-
-			resCh := make(chan string)
-
-			fmt.Printf("sending request to %s\n", connector.name)
-
-			connector.reqCh <- httpRequest{
-				r,
-				resCh,
-			}
-
-			select {
-			case res := <-resCh:
-				bio.WriteString(res + "\n")
-				bio.Flush()
-			}
-		})
+		installConnector(mux, connectors[i])
 	}
 
 	return mux
+}
+
+func installConnector(mux *http.ServeMux, connector *bfConnector) {
+	mux.HandleFunc("/"+connector.name, func(w http.ResponseWriter, r *http.Request) {
+		bio := bufio.NewWriter(w)
+
+		resCh := make(chan string)
+
+		fmt.Printf("sending request to %s\n", connector.name)
+
+		connector.reqCh <- httpRequest{
+			r,
+			resCh,
+		}
+
+		select {
+		case res := <-resCh:
+			_, err := bio.WriteString(res + "\n")
+			if err != nil {
+				fmt.Println(err)
+				break
+			}
+			err = bio.Flush()
+			if err != nil {
+				fmt.Println(err)
+				break
+			}
+		}
+	})
 }

@@ -27,7 +27,7 @@ type httpServer struct {
 // Config is a struct containing the configuration for an instance of Bifrost.
 type Config struct {
 	Servers map[string]server
-	Http    httpServer
+	HTTP    httpServer
 }
 
 type bfConnector struct {
@@ -53,7 +53,7 @@ type httpRequest struct {
 	resCh chan<- string
 }
 
-func InitBfConnector(name string, updateCh chan baps3.Message, waitGroup *sync.WaitGroup, logger *log.Logger) (c *bfConnector) {
+func initBfConnector(name string, updateCh chan baps3.Message, waitGroup *sync.WaitGroup, logger *log.Logger) (c *bfConnector) {
 	resCh := make(chan baps3.Message)
 
 	c = new(bfConnector)
@@ -85,13 +85,16 @@ func (c *bfConnector) Run() {
 			fmt.Printf("connector %s response\n", c.name)
 			rq.resCh <- "<http><head><title>" + c.name + "</title></head><body>" + c.state + "</body></http>"
 		case res := <-c.resCh:
-			if res.Word() == baps3.RsState {
+			switch res.Word() {
+			case baps3.RsState:
 				state, err := res.Arg(0)
 				if err != nil {
 					c.state = "???"
 				} else {
 					c.state = state
 				}
+			case baps3.RsTime:
+
 			}
 			c.updateCh <-res
 		}
@@ -146,7 +149,7 @@ func main() {
 	wg := new(sync.WaitGroup)
 
 	for name, s := range conf.Servers {
-		c := InitBfConnector(name, resCh, wg, logger)
+		c := initBfConnector(name, resCh, wg, logger)
 		connectors = append(connectors, c)
 		c.conn.Connect(s.Hostport)
 		go c.Run()
@@ -156,7 +159,7 @@ func main() {
 	// baps3-go connector.
 	wg.Add(len(connectors) * 2)
 
-	initAndStartHTTP(conf.Http, connectors, logger)
+	initAndStartHTTP(conf.HTTP, connectors, logger)
 
 	for {
 		select {
