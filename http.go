@@ -66,6 +66,7 @@ func installConnector(mux *http.ServeMux, connector *bfConnector) {
 
 		fmt.Printf("sending request to %s\n", connector.name)
 
+		w.Header().Add("Content-Type", "application/json")
 		connector.reqCh <- httpRequest{
 			r,
 			resCh,
