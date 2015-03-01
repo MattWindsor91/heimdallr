@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bufio"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -42,8 +42,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 type httpRequest struct {
 	raw *http.Request
 
-	// TODO(CaptainHayashi): richer response than a string.
-	resCh chan<- string
+	resCh chan<- interface{}
 }
 
 func initHTTP(connectors []*bfConnector) *http.ServeMux {
@@ -60,9 +59,7 @@ func initHTTP(connectors []*bfConnector) *http.ServeMux {
 
 func installConnector(mux *http.ServeMux, connector *bfConnector) {
 	mux.HandleFunc("/"+connector.name, func(w http.ResponseWriter, r *http.Request) {
-		bio := bufio.NewWriter(w)
-
-		resCh := make(chan string)
+		resCh := make(chan interface{})
 
 		fmt.Printf("sending request to %s\n", connector.name)
 
@@ -74,12 +71,12 @@ func installConnector(mux *http.ServeMux, connector *bfConnector) {
 
 		select {
 		case res := <-resCh:
-			_, err := bio.WriteString(res + "\n")
+			j, err := json.Marshal(res)
 			if err != nil {
 				fmt.Println(err)
 				break
 			}
-			err = bio.Flush()
+			_, err = w.Write(j)
 			if err != nil {
 				fmt.Println(err)
 				break
