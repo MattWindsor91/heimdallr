@@ -17,11 +17,14 @@ type GetResponse struct {
 
 type bfConnector struct {
 	conn   *baps3.Connector
-	state  string
-	time   time.Duration
 	name   string
 	wg     *sync.WaitGroup
 	logger *log.Logger
+
+	// Cache of BAPS3 service internal state
+	state  string
+	time   time.Duration
+	file   string
 
 	reqCh chan httpRequest
 	resCh <-chan baps3.Message
@@ -66,9 +69,11 @@ func (c *bfConnector) Run() {
 				Value: struct {
 					State string
 					Time  int64
+					File  string
 				}{
 					c.state,
 					c.time.Nanoseconds() / 1000,
+					c.file,
 				},
 			}
 		case res := <-c.resCh:
@@ -92,6 +97,14 @@ func (c *bfConnector) Run() {
 				}
 
 				c.time = time.Duration(usec) * time.Microsecond
+			case baps3.RsFile:
+				file, err := res.Arg(0)
+				if err != nil {
+					c.file = ""
+					break
+				}
+
+				c.file = file
 			}
 			c.updateCh <- res
 		}
