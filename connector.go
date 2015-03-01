@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -69,8 +70,13 @@ func (c *bfConnector) Run() {
 			if !ok {
 				return
 			}
-			fmt.Printf("connector %s response\n", c.name)
-			rq.resCh <- GetOk(c.rootGet())
+
+			// TODO(CaptainHayashi): probably make this more robust
+			resource := strings.Replace(rq.resource, "/" + c.name, "", 1)
+			fmt.Printf("connector %s response %s\n", c.name, resource)
+
+			// TODO(CaptainHayashi): other methods
+			rq.resCh <- c.get(resource)
 		case res := <-c.resCh:
 			var err error
 			switch res.Word() {
@@ -89,6 +95,32 @@ func (c *bfConnector) Run() {
 	}
 
 	return
+}
+
+func (c *bfConnector) get(resource string) interface{} {
+	// TODO(CaptainHayashi): HTTP status codes
+
+	// TODO(CaptainHayashi): probably peel off one layer at a
+	// time (or use regexes), because this approach won't scale to
+	// playlists due to the dynamic nature of the resources there.
+	// Possibly https://github.com/ryanuber/go-glob
+	switch resource {
+	case "/":
+		return GetOk(c.rootGet())
+	case "/player", "/player/":
+		return GetOk(c.playerGet())
+	case "/player/state", "/player/state/":
+		return GetOk(c.stateGet())
+	case "/player/time", "/player/time/":
+		return GetOk(c.timeGet())
+	case "/player/file", "/player/file/":
+		return GetOk(c.fileGet())
+	}
+
+	return GetResponse{
+		Status: "what",
+		Value: "resource not found: " + resource,
+	}
 }
 
 // GET value for /

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 )
 
@@ -40,32 +41,34 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type httpRequest struct {
-	raw *http.Request
-
+	// TODO(CaptainHayashi): method, payload
+	resource string
 	resCh chan<- interface{}
 }
 
-func initHTTP(connectors []*bfConnector) *http.ServeMux {
-	mux := http.NewServeMux()
-	mux.Handle("/", http.FileServer(http.Dir("static")))
-	mux.HandleFunc("/ws", wsHandler)
+func initHTTP(connectors []*bfConnector) http.Handler {
+	r := mux.NewRouter()
+	r.Handle("/", http.FileServer(http.Dir("static")))
+	r.HandleFunc("/ws", wsHandler)
 
 	for i := range connectors {
-		installConnector(mux, connectors[i])
+		installConnector(r, connectors[i])
 	}
 
-	return mux
+	return r
 }
 
-func installConnector(mux *http.ServeMux, connector *bfConnector) {
-	mux.HandleFunc("/"+connector.name, func(w http.ResponseWriter, r *http.Request) {
+func installConnector(router *mux.Router, connector *bfConnector) {
+	fn := func(w http.ResponseWriter, r *http.Request) {
 		resCh := make(chan interface{})
 
 		fmt.Printf("sending request to %s\n", connector.name)
 
+		resource := r.URL.Path
+
 		w.Header().Add("Content-Type", "application/json")
 		connector.reqCh <- httpRequest{
-			r,
+			resource,
 			resCh,
 		}
 
@@ -82,5 +85,8 @@ func installConnector(mux *http.ServeMux, connector *bfConnector) {
 				break
 			}
 		}
-	})
+	}
+
+	router.HandleFunc("/"+connector.name, fn)
+	router.PathPrefix("/"+connector.name+"/").HandlerFunc(fn)
 }
