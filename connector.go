@@ -14,6 +14,12 @@ type GetResponse struct {
 	Status string
 	Value  interface{}
 }
+func GetOk(value interface{}) *GetResponse {
+	r := new(GetResponse)
+	r.Status = "ok"
+	r.Value = value
+	return r
+}
 
 type bfConnector struct {
 	conn   *baps3.Connector
@@ -64,18 +70,7 @@ func (c *bfConnector) Run() {
 				return
 			}
 			fmt.Printf("connector %s response\n", c.name)
-			rq.resCh <- GetResponse{
-				Status: "ok",
-				Value: struct {
-					State string
-					Time  int64
-					File  string
-				}{
-					c.state,
-					c.time.Nanoseconds() / 1000,
-					c.file,
-				},
-			}
+			rq.resCh <- GetOk(c.rootGet())
 		case res := <-c.resCh:
 			var err error
 			switch res.Word() {
@@ -94,6 +89,46 @@ func (c *bfConnector) Run() {
 	}
 
 	return
+}
+
+// GET value for /
+func (c *bfConnector) rootGet() interface{} {
+	return struct {
+		Player interface{}
+		Playlist interface{}
+	}{
+		c.playerGet(),
+		[]string{},
+	}
+}
+
+// GET value for /player
+func (c *bfConnector) playerGet() interface{} {
+	return struct {
+		State string
+		Time  int64
+		File  string
+	}{
+		c.stateGet(),
+		c.timeGet(),
+		c.fileGet(),
+	}
+}
+
+// GET value for /player/state
+func (c *bfConnector) stateGet() string {
+	return c.state
+}
+
+// GET value for /player/time
+func (c *bfConnector) timeGet() int64 {
+	// Time is reported in _micro_seconds
+	return c.time.Nanoseconds() / 1000
+}
+
+// GET value for /player/file
+func (c *bfConnector) fileGet() string {
+	return c.file
 }
 
 func (c *bfConnector) updateFileFromMessage(res baps3.Message) (err error) {
