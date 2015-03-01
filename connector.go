@@ -77,38 +77,61 @@ func (c *bfConnector) Run() {
 				},
 			}
 		case res := <-c.resCh:
+			var err error
 			switch res.Word() {
-			case baps3.RsState:
-				state, err := res.Arg(0)
-				if err != nil {
-					c.state = "???"
-				} else {
-					c.state = state
-				}
-			case baps3.RsTime:
-				usecs, err := res.Arg(0)
-				if err != nil {
-					break
-				}
-
-				usec, err := strconv.Atoi(usecs)
-				if err != nil {
-					break
-				}
-
-				c.time = time.Duration(usec) * time.Microsecond
 			case baps3.RsFile:
-				file, err := res.Arg(0)
-				if err != nil {
-					c.file = ""
-					break
-				}
-
-				c.file = file
+				err = c.updateFileFromMessage(res)
+			case baps3.RsState:
+				err = c.updateStateFromMessage(res)
+			case baps3.RsTime:
+				err = c.updateTimeFromMessage(res)
+			}
+			if err != nil {
+				fmt.Println(err)
 			}
 			c.updateCh <- res
 		}
 	}
+
+	return
+}
+
+func (c *bfConnector) updateFileFromMessage(res baps3.Message) (err error) {
+	file, err := res.Arg(0)
+	if err != nil {
+		c.file = ""
+		return
+	}
+
+	c.file = file
+
+	return
+}
+
+func (c *bfConnector) updateStateFromMessage(res baps3.Message) (err error) {
+	state, err := res.Arg(0)
+	if err != nil {
+		c.state = "???"
+		return
+	}
+
+	c.state = state
+
+	return
+}
+
+func (c *bfConnector) updateTimeFromMessage(res baps3.Message) (err error) {
+	usecs, err := res.Arg(0)
+	if err != nil {
+		return
+	}
+
+	usec, err := strconv.Atoi(usecs)
+	if err != nil {
+		return
+	}
+
+	c.time = time.Duration(usec) * time.Microsecond
 
 	return
 }
