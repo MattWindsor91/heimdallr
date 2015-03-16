@@ -1,2 +1,5 @@
 # Vim swap files
 *.sw?
+
+config.toml
+bifrost
