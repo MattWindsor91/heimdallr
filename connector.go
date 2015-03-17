@@ -15,6 +15,7 @@ type GetResponse struct {
 	Status string
 	Value  interface{}
 }
+
 func GetOk(value interface{}) *GetResponse {
 	r := new(GetResponse)
 	r.Status = "ok"
@@ -29,9 +30,9 @@ type bfConnector struct {
 	logger *log.Logger
 
 	// Cache of BAPS3 service internal state
-	state  string
-	time   time.Duration
-	file   string
+	state string
+	time  time.Duration
+	file  string
 
 	reqCh chan httpRequest
 	resCh <-chan baps3.Message
@@ -72,7 +73,7 @@ func (c *bfConnector) Run() {
 			}
 
 			// TODO(CaptainHayashi): probably make this more robust
-			resource := strings.Replace(rq.resource, "/" + c.name, "", 1)
+			resource := strings.Replace(rq.resource, "/"+c.name, "", 1)
 			fmt.Printf("connector %s response %s\n", c.name, resource)
 
 			// TODO(CaptainHayashi): other methods
@@ -119,14 +120,14 @@ func (c *bfConnector) get(resource string) interface{} {
 
 	return GetResponse{
 		Status: "what",
-		Value: "resource not found: " + resource,
+		Value:  "resource not found: " + resource,
 	}
 }
 
 // GET value for /
 func (c *bfConnector) rootGet() interface{} {
 	return struct {
-		Player interface{}
+		Player   interface{}
 		Playlist interface{}
 	}{
 		c.playerGet(),

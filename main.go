@@ -84,16 +84,18 @@ func main() {
 	// Goroutine for the bifrost connector, and the lower-level
 	// baps3-go connector.
 	wg.Add(len(connectors) * 2)
-
-	initAndStartHTTP(conf.HTTP, connectors, logger)
+	wspool := NewWspool(wg)
+	initAndStartHTTP(conf.HTTP, connectors, wspool, logger)
+	go wspool.run()
 
 	for {
 		select {
 		case data := <-resCh:
 			fmt.Println(data.String())
-			wsbroadcast(data.String())
+			wspool.broadcast <- []byte(data.String())
 		case <-sigs:
 			killConnectors(connectors)
+			close(wspool.broadcast)
 			wg.Wait()
 			logger.Println("Exiting...")
 			os.Exit(0)
@@ -101,8 +103,8 @@ func main() {
 	}
 }
 
-func initAndStartHTTP(conf httpServer, connectors []*bfConnector, logger *log.Logger) {
-	mux := initHTTP(connectors)
+func initAndStartHTTP(conf httpServer, connectors []*bfConnector, wspool *Wspool, logger *log.Logger) {
+	mux := initHTTP(connectors, wspool, logger)
 	go func() {
 		err := http.ListenAndServe(conf.Hostport, mux)
 		if err != nil {

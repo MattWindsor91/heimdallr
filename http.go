@@ -3,53 +3,35 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/gorilla/websocket"
 )
-
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-}
-
-var wsClients []*websocket.Conn
-
-func wsbroadcast(msg string) {
-	for _, ws := range wsClients {
-		err := ws.WriteMessage(websocket.TextMessage, []byte(msg))
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
-	}
-}
-
-func wsHandler(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	wsClients = append(wsClients, conn)
-	err = conn.WriteMessage(websocket.TextMessage, []byte("Connected"))
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-}
 
 type httpRequest struct {
 	// TODO(CaptainHayashi): method, payload
 	resource string
-	resCh chan<- interface{}
+	resCh    chan<- interface{}
 }
 
-func initHTTP(connectors []*bfConnector) http.Handler {
+func initHTTP(connectors []*bfConnector, wspool *Wspool, log *log.Logger) http.Handler {
 	r := mux.NewRouter()
 	r.Handle("/", http.FileServer(http.Dir("static")))
-	r.HandleFunc("/ws", wsHandler)
+	r.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "GET" {
+			http.Error(w, "Method not allowed", 405)
+			return
+		}
+		ws, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		c := &wsConn{send: make(chan []byte, 256), ws: ws}
+		wspool.register <- c
+		c.writeLoop()
+	})
 
 	for i := range connectors {
 		installConnector(r, connectors[i])
@@ -88,5 +70,5 @@ func installConnector(router *mux.Router, connector *bfConnector) {
 	}
 
 	router.HandleFunc("/"+connector.name, fn)
-	router.PathPrefix("/"+connector.name+"/").HandlerFunc(fn)
+	router.PathPrefix("/" + connector.name + "/").HandlerFunc(fn)
 }
