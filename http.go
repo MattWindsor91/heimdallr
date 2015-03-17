@@ -17,7 +17,6 @@ type httpRequest struct {
 
 func initHTTP(connectors []*bfConnector, wspool *Wspool, log *log.Logger) http.Handler {
 	r := mux.NewRouter()
-	r.Handle("/", http.FileServer(http.Dir("static")))
 	r.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "GET" {
 			http.Error(w, "Method not allowed", 405)
@@ -32,6 +31,7 @@ func initHTTP(connectors []*bfConnector, wspool *Wspool, log *log.Logger) http.H
 		wspool.register <- c
 		c.writeLoop()
 	})
+	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./static/")))
 
 	for i := range connectors {
 		installConnector(r, connectors[i])
