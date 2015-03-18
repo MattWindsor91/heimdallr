@@ -106,12 +106,14 @@ func (c *bfConnector) get(resource string) interface{} {
 	// playlists due to the dynamic nature of the resources there.
 	// Possibly https://github.com/ryanuber/go-glob
 	switch resource {
-	case "/":
+	case "", "/":
 		return GetOk(c.rootGet())
+	case "/control", "/control/":
+		return GetOk(c.controlGet())
+	case "/control/state", "/control/state/":
+		return GetOk(c.stateGet())
 	case "/player", "/player/":
 		return GetOk(c.playerGet())
-	case "/player/state", "/player/state/":
-		return GetOk(c.stateGet())
 	case "/player/time", "/player/time/":
 		return GetOk(c.timeGet())
 	case "/player/file", "/player/file/":
@@ -127,30 +129,39 @@ func (c *bfConnector) get(resource string) interface{} {
 // GET value for /
 func (c *bfConnector) rootGet() interface{} {
 	return struct {
+		Control  interface{}
 		Player   interface{}
 		Playlist interface{}
 	}{
+		c.controlGet(),
 		c.playerGet(),
 		[]string{},
 	}
 }
 
-// GET value for /player
-func (c *bfConnector) playerGet() interface{} {
+// GET value for /control
+func (c *bfConnector) controlGet() interface{} {
 	return struct {
 		State string
-		Time  int64
-		File  string
 	}{
 		c.stateGet(),
-		c.timeGet(),
-		c.fileGet(),
 	}
 }
 
-// GET value for /player/state
+// GET value for /control/state
 func (c *bfConnector) stateGet() string {
 	return c.state
+}
+
+// GET value for /player
+func (c *bfConnector) playerGet() interface{} {
+	return struct {
+		Time  int64
+		File  string
+	}{
+		c.timeGet(),
+		c.fileGet(),
+	}
 }
 
 // GET value for /player/time
