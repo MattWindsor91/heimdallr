@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"io"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -56,12 +57,7 @@ func installConnector(router *mux.Router, connector *bfConnector) {
 
 		select {
 		case res := <-resCh:
-			j, err := json.Marshal(res)
-			if err != nil {
-				fmt.Println(err)
-				break
-			}
-			_, err = w.Write(j)
+			err := dumpJson(w, res)
 			if err != nil {
 				fmt.Println(err)
 				break
@@ -71,4 +67,15 @@ func installConnector(router *mux.Router, connector *bfConnector) {
 
 	router.HandleFunc("/"+connector.name, fn)
 	router.PathPrefix("/" + connector.name + "/").HandlerFunc(fn)
+}
+
+// dumpJson dumps the JSON marshalling of res into w.
+func dumpJson(w io.Writer, res interface{}) (err error) {
+	j, err := json.Marshal(res)
+
+	if err == nil {
+		_, err = w.Write(j)
+	}
+
+	return
 }
