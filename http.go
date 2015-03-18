@@ -3,8 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"io"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -32,11 +32,12 @@ func initHTTP(connectors []*bfConnector, wspool *Wspool, log *log.Logger) http.H
 		wspool.register <- c
 		c.writeLoop()
 	})
-	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./static/")))
 
 	for i := range connectors {
 		installConnector(r, connectors[i])
 	}
+
+	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./static/")))
 
 	return r
 }
@@ -66,6 +67,7 @@ func installConnector(router *mux.Router, connector *bfConnector) {
 	}
 
 	router.HandleFunc("/"+connector.name, fn)
+	router.HandleFunc("/"+connector.name+"/", fn)
 	router.PathPrefix("/" + connector.name + "/").HandlerFunc(fn)
 }
 
