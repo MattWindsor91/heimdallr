@@ -129,9 +129,9 @@ func (c *bfConnector) get(resource string) interface{} {
 // GET value for /
 func (c *bfConnector) rootGet() interface{} {
 	return struct {
-		Control  interface{}
-		Player   interface{}
-		Playlist interface{}
+		Control  interface{} `json:"control,omitempty"`
+		Player   interface{} `json:"player,omitempty"`
+		Playlist interface{} `json:"playlist,omitempty"`
 	}{
 		c.controlGet(),
 		c.playerGet(),
@@ -142,7 +142,7 @@ func (c *bfConnector) rootGet() interface{} {
 // GET value for /control
 func (c *bfConnector) controlGet() interface{} {
 	return struct {
-		State string
+		State string `json:"state"`
 	}{
 		c.stateGet(),
 	}
@@ -156,8 +156,8 @@ func (c *bfConnector) stateGet() string {
 // GET value for /player
 func (c *bfConnector) playerGet() interface{} {
 	return struct {
-		Time  int64
-		File  string
+		Time int64  `json:"time"`
+		File string `json:"file,omitempty"`
 	}{
 		c.timeGet(),
 		c.fileGet(),
