@@ -58,7 +58,7 @@ func installConnector(router *mux.Router, connector *bfConnector) {
 
 		select {
 		case res := <-resCh:
-			err := dumpJson(w, res)
+			err := dumpJSON(w, res)
 			if err != nil {
 				fmt.Println(err)
 				break
@@ -71,8 +71,8 @@ func installConnector(router *mux.Router, connector *bfConnector) {
 	router.PathPrefix("/" + connector.name + "/").HandlerFunc(fn)
 }
 
-// dumpJson dumps the JSON marshalling of res into w.
-func dumpJson(w io.Writer, res interface{}) (err error) {
+// dumpJSON dumps the JSON marshalling of res into w.
+func dumpJSON(w io.Writer, res interface{}) (err error) {
 	j, err := json.Marshal(res)
 
 	if err == nil {
