@@ -98,32 +98,80 @@ func (c *bfConnector) Run() {
 	return
 }
 
+func splitResource(resource string) []string {
+	res := strings.Split(strings.Trim(resource, "/"), "/")
+
+	// The empty resource is returned as {""}: let's fix that
+	if len(res) == 1 && res[0] == "" {
+		res = []string{}
+	}
+
+	return res
+}
+
 func (c *bfConnector) get(resource string) interface{} {
 	// TODO(CaptainHayashi): HTTP status codes
 
-	// TODO(CaptainHayashi): probably peel off one layer at a
-	// time (or use regexes), because this approach won't scale to
-	// playlists due to the dynamic nature of the resources there.
-	// Possibly https://github.com/ryanuber/go-glob
-	switch resource {
-	case "", "/":
+	resourcePath := splitResource(resource)
+
+	if len(resourcePath) == 0 {
 		return GetOk(c.rootGet())
-	case "/control", "/control/":
-		return GetOk(c.controlGet())
-	case "/control/state", "/control/state/":
-		return GetOk(c.stateGet())
-	case "/player", "/player/":
-		return GetOk(c.playerGet())
-	case "/player/time", "/player/time/":
-		return GetOk(c.timeGet())
-	case "/player/file", "/player/file/":
-		return GetOk(c.fileGet())
 	}
 
-	return GetResponse{
-		Status: "what",
-		Value:  "resource not found: " + resource,
+	var r interface{}
+
+	switch resourcePath[0] {
+	case "control":
+		r = c.control(resourcePath[1:])
+	case "player":
+		r = c.player(resourcePath[1:])
+		//case "playlist":
+		//	r = c.playlist(resourcePath[1:])
 	}
+
+	if r == nil {
+		// TODO(CaptainHayashi): more errors
+		return GetResponse{
+			Status: "what",
+			Value:  "resource not found: " + resource,
+		}
+	}
+
+	return GetOk(r)
+}
+
+// control is the main handler for the /control resource.
+func (c *bfConnector) control(resourcePath []string) interface{} {
+	if len(resourcePath) == 0 {
+		return c.controlGet()
+	}
+
+	if len(resourcePath) == 1 {
+		switch resourcePath[0] {
+		case "state":
+			return c.stateGet()
+		}
+	}
+
+	return nil
+}
+
+// player is the main handler for the /player resource.
+func (c *bfConnector) player(resourcePath []string) interface{} {
+	if len(resourcePath) == 0 {
+		return c.playerGet()
+	}
+
+	if len(resourcePath) == 1 {
+		switch resourcePath[0] {
+		case "time":
+			return c.timeGet()
+		case "file":
+			return c.fileGet()
+		}
+	}
+
+	return nil
 }
 
 // GET value for /
