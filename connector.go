@@ -212,7 +212,7 @@ func (c *bfConnector) playerGet() interface{} {
 	// TODO(CaptainHayashi): Probably a spec change, but the fact that this
 	// resource is guarded by more than one feature is iffy.  Do we need a
 	// Player feature?
-	if !(c.hasFeature(FileLoad) || c.hasFeature(TimeReport)) {
+	if !(c.hasFeature(FtFileLoad) || c.hasFeature(FtTimeReport)) {
 		return nil
 	}
 
@@ -227,7 +227,7 @@ func (c *bfConnector) playerGet() interface{} {
 
 // GET value for /player/time
 func (c *bfConnector) timeGet() interface{} {
-	if !c.hasFeature(TimeReport) {
+	if !c.hasFeature(FtTimeReport) {
 		return nil
 	}
 
@@ -237,7 +237,7 @@ func (c *bfConnector) timeGet() interface{} {
 
 // GET value for /player/file
 func (c *bfConnector) fileGet() interface{} {
-	if !c.hasFeature(FileLoad) {
+	if !c.hasFeature(FtFileLoad) {
 		return nil
 	}
 

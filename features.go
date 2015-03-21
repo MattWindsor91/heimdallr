@@ -6,20 +6,22 @@ package main
 type Feature uint8
 
 const (
-	// FileLoad represents the FileLoad standard feature.
-	FileLoad Feature = iota
-	// PlayStop represents the PlayStop standard feature.
-	PlayStop
-	// Seek represents the Seek standard feature.
-	Seek
-	// End represents the End standard feature.
-	End
-	// TimeReport represents the TimeReport standard feature.
-	TimeReport
-	// Playlist represents the Playlist standard feature.
-	Playlist
-	// PlaylistAutoAdvance represents the Playlist.AutoAdvance feature.
-	PlaylistAutoAdvance
-	// PlaylistTextItems represents the Playlist.TextItems feature.
-	PlaylistTextItems
+	// FtUnknown represents an unknown feature.
+	FtUnknown Feature = iota
+	// FtFileLoad represents the FileLoad standard feature.
+	FtFileLoad
+	// FtPlayStop represents the PlayStop standard feature.
+	FtPlayStop
+	// FtSeek represents the Seek standard feature.
+	FtSeek
+	// FtEnd represents the End standard feature.
+	FtEnd
+	// FtTimeReport represents the TimeReport standard feature.
+	FtTimeReport
+	// FtPlaylist represents the Playlist standard feature.
+	FtPlaylist
+	// FtPlaylistAutoAdvance represents the Playlist.AutoAdvance feature.
+	FtPlaylistAutoAdvance
+	// FtPlaylistTextItems represents the Playlist.TextItems feature.
+	FtPlaylistTextItems
 )
