@@ -125,20 +125,7 @@ func (c *bfConnector) get(resource string) interface{} {
 
 	resourcePath := splitResource(resource)
 
-	if len(resourcePath) == 0 {
-		return GetOk(c.rootGet())
-	}
-
-	var r interface{}
-
-	switch resourcePath[0] {
-	case "control":
-		r = c.control(resourcePath[1:])
-	case "player":
-		r = c.player(resourcePath[1:])
-		//case "playlist":
-		//	r = c.playlist(resourcePath[1:])
-	}
+	r := c.rootGet(resourcePath)
 
 	if r == nil {
 		// TODO(CaptainHayashi): more errors
@@ -151,85 +138,69 @@ func (c *bfConnector) get(resource string) interface{} {
 	return GetOk(r)
 }
 
-// control is the main handler for the /control resource.
-func (c *bfConnector) control(resourcePath []string) interface{} {
+/* These resMaps describe simple composite resources, mapping each child
+ * resource to the functions handling them.
+ *
+ * TODO(CaptainHayashi): add support for things that aren't GET
+ *   (have each resource be a jump table of possible methods, or send the method
+ *    to the resMap func?)
+ * TODO(CaptainHayashi): decouple traversal from GET
+ * TODO(CaptainHayashi): maybe make traversal iterative instead of recursive?
+ */
+
+type resMap map[string]func(*bfConnector, []string) interface{}
+
+var (
+	rootRes = resMap{
+		"control": (*bfConnector).controlGet,
+		"player": (*bfConnector).playerGet,
+		// "playlist": (*bfConnector).playlistGet
+	}
+	controlRes = resMap{
+		"features": (*bfConnector).featuresGet,
+		"state": (*bfConnector).stateGet,
+	}
+	playerRes = resMap{
+		"time": (*bfConnector).timeGet,
+		"file": (*bfConnector).fileGet,
+	}
+)
+
+func (c *bfConnector) getResource(rm resMap, resourcePath []string) interface{} {
 	if len(resourcePath) == 0 {
-		return c.controlGet()
-	}
+		// Pull down all of the available child resources in this
+		// resource.
+		object := make(map[string] interface{})
 
-	if len(resourcePath) == 1 {
-		switch resourcePath[0] {
-		case "features":
-			return c.featuresGet()
-		case "state":
-			return c.stateGet()
+		for k := range(rm) {
+			child := rm[k](c, []string{})
+
+			// Only add a key if the child definitely exists.
+			if child != nil {
+				object[k] = child
+			}
 		}
+
+		return object
 	}
 
+	// Does the next step on the resource path exist?
+	rfunc, ok := rm[resourcePath[0]]
+	if ok {
+		// Make it that resource's responsibility to
+		// find the resource, then.
+		return rfunc(c, resourcePath[1:])
+	}
 	return nil
 }
 
-// player is the main handler for the /player resource.
-func (c *bfConnector) player(resourcePath []string) interface{} {
-	if len(resourcePath) == 0 {
-		return c.playerGet()
-	}
-
-	if len(resourcePath) == 1 {
-		switch resourcePath[0] {
-		case "time":
-			return c.timeGet()
-		case "file":
-			return c.fileGet()
-		}
-	}
-
-	return nil
+// controlGet is the GET handler for the /control resource.
+func (c *bfConnector) controlGet(resourcePath []string) interface{} {
+	return c.getResource(controlRes, resourcePath)
 }
 
-// GET value for /
-func (c *bfConnector) rootGet() interface{} {
-	return struct {
-		Control  interface{} `json:"control,omitempty"`
-		Player   interface{} `json:"player,omitempty"`
-		Playlist interface{} `json:"playlist,omitempty"`
-	}{
-		c.controlGet(),
-		c.playerGet(),
-		[]string{},
-	}
-}
-
-// GET value for /control
-func (c *bfConnector) controlGet() interface{} {
-	return struct {
-		Features []string `json:"features"`
-		State string `json:"state"`
-	}{
-		c.featuresGet(),
-		c.stateGet(),
-	}
-}
-
-// GET value for /control/features
-func (c *bfConnector) featuresGet() []string {
-	fstrings := []string{}
-
-	for k := range c.features {
-		fstrings = append(fstrings, k.String())
-	}
-
-	sort.Strings(fstrings)
-	return fstrings
-}
-
-// GET value for /control/state
-func (c *bfConnector) stateGet() string {
-	return c.state
-}
-
-// GET value for /player
-func (c *bfConnector) playerGet() interface{} {
+// playerGet is the GET handler for the /player resource.
+func (c *bfConnector) playerGet(resourcePath []string) interface{} {
 	// TODO(CaptainHayashi): Probably a spec change, but the fact that this
 	// resource is guarded by more than one feature is iffy.  Do we need a
 	// Player feature?
@@ -237,17 +208,57 @@ func (c *bfConnector) playerGet() interface{} {
 		return nil
 	}
 
-	return struct {
-		Time interface{} `json:"time"`
-		File interface{} `json:"file,omitempty"`
-	}{
-		c.timeGet(),
-		c.fileGet(),
+	return c.getResource(playerRes, resourcePath)
+}
+
+// rootGet is the GET handler for the / resource.
+func (c *bfConnector) rootGet(resourcePath []string) interface{} {
+	return c.getResource(rootRes, resourcePath)
+}
+
+// GET value for /control/features
+func (c *bfConnector) featuresGet(resourcePath []string) interface{} {
+	// We only want a resource length of 0 (all features), or 1
+	// (some index into the list of resources).
+	if 1 < len(resourcePath) {
+		return nil
 	}
+
+	fstrings := []string{}
+
+	for k := range c.features {
+		fstrings = append(fstrings, k.String())
+	}
+
+	sort.Strings(fstrings)
+
+	if len(resourcePath) == 0 {
+		return fstrings
+	} else {
+		i, err := strconv.Atoi(resourcePath[0])
+		// TODO(CaptainHayashi): handle err properly
+		if err == nil && 0 <= i && i <= len(fstrings) {
+			return fstrings[i]
+		}
+	}
+
+	return nil
+}
+
+// GET value for /control/state
+func (c *bfConnector) stateGet(resourcePath []string) interface{} {
+	if 0 < len(resourcePath) {
+		return nil
+	}
+
+	return c.state
 }
 
 // GET value for /player/time
-func (c *bfConnector) timeGet() interface{} {
+func (c *bfConnector) timeGet(resourcePath []string) interface{} {
+	if 0 < len(resourcePath) {
+		return nil
+	}
 	if !c.hasFeature(FtTimeReport) {
 		return nil
 	}
@@ -257,7 +268,10 @@ func (c *bfConnector) timeGet() interface{} {
 }
 
 // GET value for /player/file
-func (c *bfConnector) fileGet() interface{} {
+func (c *bfConnector) fileGet(resourcePath []string) interface{} {
+	if 0 < len(resourcePath) {
+		return nil
+	}
 	if !c.hasFeature(FtFileLoad) {
 		return nil
 	}
