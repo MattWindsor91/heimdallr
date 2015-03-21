@@ -3,9 +3,14 @@ package main
 // TODO(CaptainHayashi): Petition for move to baps3-go
 
 // Feature is the type for known feature flags.
-type Feature uint8
+type Feature int
 
 const (
+	/* Feature constants.
+	 *
+	 * When adding to this, also add the string equivalent to ftStrings.
+	 */
+
 	// FtUnknown represents an unknown feature.
 	FtUnknown Feature = iota
 	// FtFileLoad represents the FileLoad standard feature.
@@ -25,3 +30,40 @@ const (
 	// FtPlaylistTextItems represents the Playlist.TextItems feature.
 	FtPlaylistTextItems
 )
+
+// Yes, a global variable.
+// Go can't handle constant arrays.
+var ftStrings = []string{
+	"<UNKNOWN FEATURE>",    // FtUnknown
+	"FileLoad",             // FtFileLoad
+	"PlayStop",             // FtPlayStop
+	"Seek",                 // FtSeek
+	"End",                  // FtEnd
+	"TimeReport",           // FtTimeReport
+	"Playlist",             // FtPlaylist
+	"Playlist.AutoAdvance", // FtPlaylistAutoAdvance
+	"Playlist.TextItems",   // FtPlaylistTextItems
+}
+
+// IsUnknown returns whether word represents a feature unknown to Bifrost.
+func (word Feature) IsUnknown() bool {
+	return word == FtUnknown
+}
+
+func (word Feature) String() string {
+	return ftStrings[int(word)]
+}
+
+// LookupFeature finds the equivalent Feature for a string.
+// If the message word is not known to Bifrost, it will return FtUnknown.
+func LookupFeature(word string) Feature {
+	// This is O(n) on the size of ftStrings, which is unfortunate, but
+	// probably ok.
+	for i, str := range ftStrings {
+		if str == word {
+			return Feature(i)
+		}
+	}
+
+	return FtUnknown
+}
