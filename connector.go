@@ -30,9 +30,10 @@ type bfConnector struct {
 	logger *log.Logger
 
 	// Cache of BAPS3 service internal state
-	state string
-	time  time.Duration
-	file  string
+	features map[Feature]struct{}
+	state    string
+	time     time.Duration
+	file     string
 
 	reqCh chan httpRequest
 	resCh <-chan baps3.Message
@@ -54,6 +55,7 @@ func initBfConnector(name string, updateCh chan baps3.Message, waitGroup *sync.W
 	c.reqCh = make(chan httpRequest)
 	c.updateCh = updateCh
 
+	c.features = make(map[Feature]struct{})
 	return
 }
 
@@ -81,6 +83,8 @@ func (c *bfConnector) Run() {
 		case res := <-c.resCh:
 			var err error
 			switch res.Word() {
+			case baps3.RsFeatures:
+				err = c.updateFeaturesFromMessage(res)
 			case baps3.RsFile:
 				err = c.updateFileFromMessage(res)
 			case baps3.RsState:
@@ -242,6 +246,27 @@ func (c *bfConnector) fileGet() interface{} {
 	}
 
 	return c.file
+}
+
+func (c *bfConnector) updateFeaturesFromMessage(res baps3.Message) (err error) {
+	feats := make(map[Feature]struct{})
+
+	for i := 0; ; i++ {
+		if fstring, e := res.Arg(i); e == nil {
+			feat := LookupFeature(fstring)
+			if feat == FtUnknown {
+				err = fmt.Errorf("unknown feature: %q", fstring)
+				break
+			}
+			feats[feat] = struct{}{}
+		} else {
+			// e != nil means we've run out of arguments.
+			break
+		}
+	}
+
+	c.features = feats
+	return
 }
 
 func (c *bfConnector) updateFileFromMessage(res baps3.Message) (err error) {
