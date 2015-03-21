@@ -105,8 +105,8 @@ func (c *bfConnector) Run() {
 
 // hasFeature returns whether the connected server advertises the given feature.
 func (c *bfConnector) hasFeature(f Feature) bool {
-	// TODO(CaptainHayashi): Actually check this
-	return true
+	_, ok := c.features[f]
+	return ok
 }
 
 func splitResource(resource string) []string {
