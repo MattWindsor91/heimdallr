@@ -7,7 +7,6 @@ import (
 	"strings"
 	"sort"
 	"sync"
-	"time"
 
 	"github.com/UniversityRadioYork/baps3-go"
 )
@@ -29,12 +28,7 @@ type bfConnector struct {
 	name   string
 	wg     *sync.WaitGroup
 	logger *log.Logger
-
-	// Cache of BAPS3 service internal state
-	features map[Feature]struct{}
-	state    string
-	time     time.Duration
-	file     string
+	state  *serviceState
 
 	reqCh chan httpRequest
 	resCh <-chan baps3.Message
@@ -55,8 +49,7 @@ func initBfConnector(name string, updateCh chan baps3.Message, waitGroup *sync.W
 	c.logger = logger
 	c.reqCh = make(chan httpRequest)
 	c.updateCh = updateCh
-
-	c.features = make(map[Feature]struct{})
+	c.state = initServiceState()
 	return
 }
 
@@ -82,17 +75,12 @@ func (c *bfConnector) Run() {
 			// TODO(CaptainHayashi): other methods
 			rq.resCh <- c.get(resource)
 		case res := <-c.resCh:
-			c.update(res)
+			c.state.update(res)
+			c.updateCh <- res
 		}
 	}
 
 	return
-}
-
-// hasFeature returns whether the connected server advertises the given feature.
-func (c *bfConnector) hasFeature(f Feature) bool {
-	_, ok := c.features[f]
-	return ok
 }
 
 func splitResource(resource string) []string {
@@ -190,7 +178,7 @@ func (c *bfConnector) playerGet(resourcePath []string) interface{} {
 	// TODO(CaptainHayashi): Probably a spec change, but the fact that this
 	// resource is guarded by more than one feature is iffy.  Do we need a
 	// Player feature?
-	if !(c.hasFeature(FtFileLoad) || c.hasFeature(FtTimeReport)) {
+	if !(c.state.hasFeature(FtFileLoad) || c.state.hasFeature(FtTimeReport)) {
 		return nil
 	}
 
@@ -212,7 +200,7 @@ func (c *bfConnector) featuresGet(resourcePath []string) interface{} {
 
 	fstrings := []string{}
 
-	for k := range c.features {
+	for k := range c.state.features {
 		fstrings = append(fstrings, k.String())
 	}
 
@@ -245,12 +233,12 @@ func (c *bfConnector) timeGet(resourcePath []string) interface{} {
 	if 0 < len(resourcePath) {
 		return nil
 	}
-	if !c.hasFeature(FtTimeReport) {
+	if !c.state.hasFeature(FtTimeReport) {
 		return nil
 	}
 
 	// Time is reported in _micro_seconds
-	return c.time.Nanoseconds() / 1000
+	return c.state.time.Nanoseconds() / 1000
 }
 
 // GET value for /player/file
@@ -258,9 +246,9 @@ func (c *bfConnector) fileGet(resourcePath []string) interface{} {
 	if 0 < len(resourcePath) {
 		return nil
 	}
-	if !c.hasFeature(FtFileLoad) {
+	if !c.state.hasFeature(FtFileLoad) {
 		return nil
 	}
 
-	return c.file
+	return c.state.file
 }
