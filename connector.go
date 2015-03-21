@@ -5,6 +5,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"sort"
 	"sync"
 	"time"
 
@@ -158,6 +159,8 @@ func (c *bfConnector) control(resourcePath []string) interface{} {
 
 	if len(resourcePath) == 1 {
 		switch resourcePath[0] {
+		case "features":
+			return c.featuresGet()
 		case "state":
 			return c.stateGet()
 		}
@@ -200,10 +203,24 @@ func (c *bfConnector) rootGet() interface{} {
 // GET value for /control
 func (c *bfConnector) controlGet() interface{} {
 	return struct {
+		Features []string `json:"features"`
 		State string `json:"state"`
 	}{
+		c.featuresGet(),
 		c.stateGet(),
 	}
+}
+
+// GET value for /control/features
+func (c *bfConnector) featuresGet() []string {
+	fstrings := []string{}
+
+	for k := range c.features {
+		fstrings = append(fstrings, k.String())
+	}
+
+	sort.Strings(fstrings)
+	return fstrings
 }
 
 // GET value for /control/state
