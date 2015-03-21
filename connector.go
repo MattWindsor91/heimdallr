@@ -122,6 +122,12 @@ func (c *bfConnector) Run() {
 	return
 }
 
+// hasFeature returns whether the connected server advertises the given feature.
+func (c *bfConnector) hasFeature(f Feature) bool {
+	// TODO(CaptainHayashi): Actually check this
+	return true
+}
+
 func splitResource(resource string) []string {
 	res := strings.Split(strings.Trim(resource, "/"), "/")
 
@@ -227,9 +233,16 @@ func (c *bfConnector) stateGet() string {
 
 // GET value for /player
 func (c *bfConnector) playerGet() interface{} {
+	// TODO(CaptainHayashi): Probably a spec change, but the fact that this
+	// resource is guarded by more than one feature is iffy.  Do we need a
+	// Player feature?
+	if !(c.hasFeature(FileLoad) || c.hasFeature(TimeReport)) {
+		return nil
+	}
+
 	return struct {
-		Time int64  `json:"time"`
-		File string `json:"file,omitempty"`
+		Time interface{} `json:"time"`
+		File interface{} `json:"file,omitempty"`
 	}{
 		c.timeGet(),
 		c.fileGet(),
@@ -237,13 +250,21 @@ func (c *bfConnector) playerGet() interface{} {
 }
 
 // GET value for /player/time
-func (c *bfConnector) timeGet() int64 {
+func (c *bfConnector) timeGet() interface{} {
+	if !c.hasFeature(TimeReport) {
+		return nil
+	}
+
 	// Time is reported in _micro_seconds
 	return c.time.Nanoseconds() / 1000
 }
 
 // GET value for /player/file
-func (c *bfConnector) fileGet() string {
+func (c *bfConnector) fileGet() interface{} {
+	if !c.hasFeature(FileLoad) {
+		return nil
+	}
+
 	return c.file
 }
 
