@@ -41,19 +41,7 @@ func (wspool *Wspool) run() {
 	for {
 		select {
 		case payload, ok := <-wspool.broadcast:
-			if !ok { // channel has been closed, shutdown
-				for conn := range wspool.connections {
-					wspool.closeConn(conn)
-				}
-				wspool.quit = true
-			}
-			for conn := range wspool.connections {
-				select {
-				case conn.send <- payload:
-				default:
-					wspool.closeConn(conn)
-				}
-			}
+			wspool.handleBroadcast(payload, ok)
 		case conn := <-wspool.register:
 			wspool.connections[conn] = true
 		case conn := <-wspool.unregister:
@@ -64,6 +52,22 @@ func (wspool *Wspool) run() {
 		if wspool.quit {
 			wspool.wg.Done()
 			break
+		}
+	}
+}
+
+func (wspool *Wspool) handleBroadcast(payload []byte, ok bool) {
+	if !ok { // channel has been closed, shutdown
+		for conn := range wspool.connections {
+			wspool.closeConn(conn)
+		}
+		wspool.quit = true
+	}
+	for conn := range wspool.connections {
+		select {
+		case conn.send <- payload:
+		default:
+			wspool.closeConn(conn)
 		}
 	}
 }
