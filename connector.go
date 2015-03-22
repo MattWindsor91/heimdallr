@@ -208,12 +208,12 @@ func (c *bfConnector) featuresGet(resourcePath []string) interface{} {
 
 	if len(resourcePath) == 0 {
 		return fstrings
-	} else {
-		i, err := strconv.Atoi(resourcePath[0])
-		// TODO(CaptainHayashi): handle err properly
-		if err == nil && 0 <= i && i <= len(fstrings) {
-			return fstrings[i]
-		}
+	}
+
+	i, err := strconv.Atoi(resourcePath[0])
+	// TODO(CaptainHayashi): handle err properly
+	if err == nil && 0 <= i && i <= len(fstrings) {
+		return fstrings[i]
 	}
 
 	return nil
