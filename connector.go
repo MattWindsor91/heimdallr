@@ -11,11 +11,13 @@ import (
 	"github.com/UniversityRadioYork/baps3-go"
 )
 
+// GetResponse is the outer structure of all GET responses.
 type GetResponse struct {
 	Status string
 	Value  interface{}
 }
 
+// GetOk creates a GetResponse wrapping a successful GET result.
 func GetOk(value interface{}) *GetResponse {
 	r := new(GetResponse)
 	r.Status = "ok"
@@ -204,12 +206,18 @@ func (c *bfConnector) featuresGet(resourcePath []string) interface{} {
 		fstrings = append(fstrings, k.String())
 	}
 
+	// There's no need to sort these, but it doesn't hurt to make the list a
+	// bit easier for humans to eyeball.
 	sort.Strings(fstrings)
 
+	// Did we want the whole resource (the features list)?
 	if len(resourcePath) == 0 {
 		return fstrings
 	}
 
+	// If not, we assume we were indexing into the features list.
+	// TODO(CaptainHayashi): Factor this list-resource pattern out?
+	//   It might be useful for playlists later.
 	i, err := strconv.Atoi(resourcePath[0])
 	// TODO(CaptainHayashi): handle err properly
 	if err == nil && 0 <= i && i <= len(fstrings) {
