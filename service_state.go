@@ -72,6 +72,11 @@ func (s *serviceState) updateFeaturesFromMessage(res baps3.Message) (err error) 
 }
 
 func (s *serviceState) updateFileFromMessage(res baps3.Message) (err error) {
+	// Expecting only one argument
+	if _, err := res.Arg(1); err == nil {
+		return fmt.Errorf("too many arguments in %q", res)
+	}
+
 	file, err := res.Arg(0)
 	if err != nil {
 		s.file = ""
@@ -84,6 +89,11 @@ func (s *serviceState) updateFileFromMessage(res baps3.Message) (err error) {
 }
 
 func (s *serviceState) updateStateFromMessage(res baps3.Message) (err error) {
+	// Expecting only one argument
+	if _, err := res.Arg(1); err == nil {
+		return fmt.Errorf("too many arguments in %q", res)
+	}
+
 	state, err := res.Arg(0)
 	if err != nil {
 		s.state = "???"
@@ -96,6 +106,11 @@ func (s *serviceState) updateStateFromMessage(res baps3.Message) (err error) {
 }
 
 func (s *serviceState) updateTimeFromMessage(res baps3.Message) (err error) {
+	// Expecting only one argument
+	if _, err := res.Arg(1); err == nil {
+		return fmt.Errorf("too many arguments in %q", res)
+	}
+
 	usecs, err := res.Arg(0)
 	if err != nil {
 		return
