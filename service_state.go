@@ -20,10 +20,10 @@ type serviceState struct {
 	state    string
 
 	// TimeReport
-	time     time.Duration
+	time time.Duration
 
 	// FileLoad
-	file     string
+	file string
 }
 
 // initServiceState creates a new, blank, serviceState.

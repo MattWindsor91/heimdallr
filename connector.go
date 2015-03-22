@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 	"log"
+	"sort"
 	"strconv"
 	"strings"
-	"sort"
 	"sync"
 
 	"github.com/UniversityRadioYork/baps3-go"
@@ -131,12 +131,12 @@ type resMap map[string]func(*bfConnector, []string) interface{}
 var (
 	rootRes = resMap{
 		"control": (*bfConnector).controlGet,
-		"player": (*bfConnector).playerGet,
+		"player":  (*bfConnector).playerGet,
 		// "playlist": (*bfConnector).playlistGet
 	}
 	controlRes = resMap{
 		"features": (*bfConnector).featuresGet,
-		"state": (*bfConnector).stateGet,
+		"state":    (*bfConnector).stateGet,
 	}
 	playerRes = resMap{
 		"time": (*bfConnector).timeGet,
@@ -148,9 +148,9 @@ func (c *bfConnector) getResource(rm resMap, resourcePath []string) interface{} 
 	if len(resourcePath) == 0 {
 		// Pull down all of the available child resources in this
 		// resource.
-		object := make(map[string] interface{})
+		object := make(map[string]interface{})
 
-		for k := range(rm) {
+		for k := range rm {
 			child := rm[k](c, []string{})
 
 			// Only add a key if the child definitely exists.
