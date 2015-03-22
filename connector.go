@@ -77,7 +77,9 @@ func (c *bfConnector) Run() {
 			// TODO(CaptainHayashi): other methods
 			rq.resCh <- c.get(resource)
 		case res := <-c.resCh:
-			c.state.update(res)
+			if err := c.state.update(res); err != nil {
+				fmt.Println(err)
+			}
 			c.updateCh <- res
 		}
 	}

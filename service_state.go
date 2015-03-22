@@ -35,9 +35,7 @@ func initServiceState() (s *serviceState) {
 }
 
 // update updates a serviceState according to an incoming service response.
-func (s *serviceState) update(res baps3.Message) {
-	var err error
-
+func (s *serviceState) update(res baps3.Message) (err error) {
 	switch res.Word() {
 	case baps3.RsFeatures:
 		err = s.updateFeaturesFromMessage(res)
@@ -48,9 +46,8 @@ func (s *serviceState) update(res baps3.Message) {
 	case baps3.RsTime:
 		err = s.updateTimeFromMessage(res)
 	}
-	if err != nil {
-		fmt.Println(err)
-	}
+
+	return
 }
 
 func (s *serviceState) updateFeaturesFromMessage(res baps3.Message) (err error) {
