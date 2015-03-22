@@ -7,6 +7,60 @@ import (
 	"github.com/UniversityRadioYork/baps3-go"
 )
 
+// TestHasFeature tests whether serviceState.hasFeature seems to work.
+func TestHasFeature(t *testing.T) {
+	cases := []struct {
+		feat    Feature
+		present bool
+	}{
+		// We check the presence of some features and the absence of
+		// others.  This is a shuffled, but even distribution of both.
+		{FtFileLoad, true},
+		{FtPlayStop, true},
+		{FtSeek, false},
+		{FtEnd, true},
+		{FtTimeReport, false},
+		{FtPlaylist, true},
+		{FtPlaylistAutoAdvance, false},
+		{FtPlaylistTextItems, false},
+	}
+
+	// This is for collecting the features we do want to enable.
+	presents := []Feature{}
+
+	// All features should be absent on a new serviceState.
+	srv := initServiceState()
+
+	for _, c := range cases {
+		if srv.hasFeature(c.feat) {
+			t.Errorf("initial serviceState shouldn't have feature %q", c.feat)
+		}
+		if c.present {
+			presents = append(presents, c.feat)
+		}
+	}
+
+	// Now set the features we want.
+	msg := baps3.NewMessage(baps3.RsFeatures)
+	for _, p := range presents {
+		msg.AddArg(p.String())
+	}
+
+	if err := srv.update(*msg); err != nil {
+		t.Errorf("error when setting features: %s", err)
+	}
+
+	// Now check if hasFeature works (!)
+	for _, d := range cases {
+		has := srv.hasFeature(d.feat)
+		if has && !d.present {
+			t.Errorf("service should not have feature %q, but does", d.feat)
+		} else if !has && d.present {
+			t.Errorf("service should have feature %q, but does not", d.feat)
+		}
+	}
+}
+
 // TestServiceStateUpdateFail tests the behaviour of a serviceState when it
 // receives a malformed message.
 func TestServiceStateUpdateFail(t *testing.T) {
