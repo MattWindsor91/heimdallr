@@ -96,7 +96,9 @@ type wsConn struct {
 
 // write writes a message with the given message type and payload.
 func (c *wsConn) write(mt int, payload []byte) error {
-	c.ws.SetWriteDeadline(time.Now().Add(writeWait))
+	if err := c.ws.SetWriteDeadline(time.Now().Add(writeWait)); err != nil {
+		return err
+	}
 	return c.ws.WriteMessage(mt, payload)
 }
 
@@ -106,13 +108,15 @@ func (c *wsConn) writeLoop() {
 	pingTicker := time.NewTicker(pingPeriod)
 	defer func() {
 		pingTicker.Stop()
-		c.ws.Close()
+		// TODO(CaptainHayashi): use this error?
+		_ = c.ws.Close()
 	}()
 	for {
 		select {
 		case msg, ok := <-c.send:
 			if !ok {
-				c.write(websocket.CloseMessage, []byte{})
+				// TODO(CaptainHayashi): use this error?
+				_ = c.write(websocket.CloseMessage, []byte{})
 				return
 			}
 			if err := c.write(websocket.TextMessage, msg); err != nil {
