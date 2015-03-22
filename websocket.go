@@ -12,6 +12,7 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
+// Wspool is the structure of pools of websocket connections.
 type Wspool struct {
 	broadcast            chan []byte
 	register, unregister chan *wsConn
@@ -20,6 +21,7 @@ type Wspool struct {
 	wg                   *sync.WaitGroup
 }
 
+// NewWspool creates a Wspool with the given waitgroup.
 func NewWspool(wg *sync.WaitGroup) (wspool *Wspool) {
 	wspool = &Wspool{
 		broadcast:   make(chan []byte),
@@ -36,6 +38,7 @@ func (wspool *Wspool) closeConn(conn *wsConn) {
 	close(conn.send)
 }
 
+// run is the main loop on a Wspool.
 func (wspool *Wspool) run() {
 	wspool.wg.Add(1)
 	for {
@@ -56,6 +59,7 @@ func (wspool *Wspool) run() {
 	}
 }
 
+// handleBroadcast handles a broadcast request.
 func (wspool *Wspool) handleBroadcast(payload []byte, ok bool) {
 	if !ok { // channel has been closed, shutdown
 		for conn := range wspool.connections {
