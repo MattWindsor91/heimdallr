@@ -30,6 +30,7 @@ type serviceState struct {
 func initServiceState() (s *serviceState) {
 	s = new(serviceState)
 	s.features = make(map[baps3.Feature]struct{})
+	s.state = "Ready"
 
 	return
 }
