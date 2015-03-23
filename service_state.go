@@ -96,7 +96,10 @@ func (s *serviceState) updateStateFromMessage(res baps3.Message) (err error) {
 
 	state, err := res.Arg(0)
 	if err != nil {
-		s.state = "???"
+		// TODO(CaptainHayashi): "Ready" is currently the most
+		// valid fallback value in the spec.  Does the spec
+		// need an 'I don't know what the state is' value?
+		s.state = "Ready"
 		return
 	}
 
