@@ -10,23 +10,23 @@ import (
 // TestHasFeature tests whether serviceState.hasFeature seems to work.
 func TestHasFeature(t *testing.T) {
 	cases := []struct {
-		feat    Feature
+		feat    baps3.Feature
 		present bool
 	}{
 		// We check the presence of some features and the absence of
 		// others.  This is a shuffled, but even distribution of both.
-		{FtFileLoad, true},
-		{FtPlayStop, true},
-		{FtSeek, false},
-		{FtEnd, true},
-		{FtTimeReport, false},
-		{FtPlaylist, true},
-		{FtPlaylistAutoAdvance, false},
-		{FtPlaylistTextItems, false},
+		{baps3.FtFileLoad, true},
+		{baps3.FtPlayStop, true},
+		{baps3.FtSeek, false},
+		{baps3.FtEnd, true},
+		{baps3.FtTimeReport, false},
+		{baps3.FtPlaylist, true},
+		{baps3.FtPlaylistAutoAdvance, false},
+		{baps3.FtPlaylistTextItems, false},
 	}
 
 	// This is for collecting the features we do want to enable.
-	presents := []Feature{}
+	presents := []baps3.Feature{}
 
 	// All features should be absent on a new serviceState.
 	srv := initServiceState()
@@ -112,8 +112,8 @@ func TestServiceStateUpdate(t *testing.T) {
 		{
 			baps3.NewMessage(baps3.RsFeatures).AddArg("End").AddArg("FileLoad"),
 			func(s *serviceState) (err error) {
-				_, endIn := s.features[FtEnd]
-				_, flIn := s.features[FtFileLoad]
+				_, endIn := s.features[baps3.FtEnd]
+				_, flIn := s.features[baps3.FtFileLoad]
 
 				if !endIn || !flIn {
 					err = fmt.Errorf(
