@@ -13,14 +13,14 @@ import (
 )
 
 // GetResponse is the outer structure of all GET responses.
-type GetResponse struct {
+type Response struct {
 	Status string
-	Value  interface{}
+	Value  interface{} `json:",omitempty"`
 }
 
 // GetOk creates a GetResponse wrapping a successful GET result.
-func GetOk(value interface{}) *GetResponse {
-	r := new(GetResponse)
+func GetOk(value interface{}) *Response {
+	r := new(Response)
 	r.Status = "ok"
 	r.Value = value
 	return r
@@ -31,18 +31,10 @@ type PutRequest struct {
 	Value interface{}
 }
 
-// PutResponse is the outer structure of all PUT results
-// TODO(wlcx): Generalise and merge with GerResponse?
-type PutResponse struct {
-	Status string
-	Value  interface{}
-}
-
 // PutOk creates a PutResponse wrapping a successful PUT
-func PutOk(value interface{}) *PutResponse {
-	r := new(PutResponse)
+func PutOk() *Response {
+	r := new(Response)
 	r.Status = "ok"
-	r.Value = value
 	return r
 }
 
@@ -133,7 +125,7 @@ func (c *bfConnector) get(resource string) interface{} {
 
 	if r == nil {
 		// TODO(CaptainHayashi): more errors
-		return GetResponse{
+		return Response{
 			Status: "what",
 			Value:  "resource not found: " + resource,
 		}
@@ -147,13 +139,13 @@ func (c *bfConnector) put(resource string, payload []byte) interface{} {
 	r := c.rootPut(resourcePath, payload)
 
 	if r == nil {
-		return PutResponse{
+		return Response{
 			Status: "what",
 			Value:  "resource not found: " + resource,
 		}
 	}
 
-	return PutOk(r)
+	return PutOk()
 }
 
 /* These resMaps describe simple composite resources, mapping each child
