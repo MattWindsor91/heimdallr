@@ -40,14 +40,14 @@ type bfConnector struct {
 	updateCh chan<- baps3.Message
 }
 
-func initBfConnector(name string, updateCh chan baps3.Message, waitGroup *sync.WaitGroup, logger *log.Logger) (c *bfConnector) {
+func initBfConnector(name string, updateCh chan baps3.Message, wg *sync.WaitGroup, logger *log.Logger) (c *bfConnector) {
 	resCh := make(chan baps3.Message)
 
 	c = new(bfConnector)
 	c.resCh = resCh
-	c.conn = baps3.InitConnector(name, resCh, waitGroup, logger)
+	c.conn = baps3.InitConnector(name, resCh, wg, logger)
 	c.name = name
-	c.wg = waitGroup
+	c.wg = wg
 	c.logger = logger
 	c.reqCh = make(chan httpRequest)
 	c.updateCh = updateCh
