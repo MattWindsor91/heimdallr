@@ -12,13 +12,13 @@ import (
 	"github.com/UniversityRadioYork/baps3-go"
 )
 
-// GetResponse is the outer structure of all GET responses.
+// Response is the outer structure of all json responses.
 type Response struct {
 	Status string
 	Value  interface{} `json:",omitempty"`
 }
 
-// GetOk creates a GetResponse wrapping a successful GET result.
+// GetOk creates a Response wrapping a successful GET result.
 func GetOk(value interface{}) *Response {
 	r := new(Response)
 	r.Status = "ok"
@@ -31,7 +31,7 @@ type PutRequest struct {
 	Value interface{}
 }
 
-// PutOk creates a PutResponse wrapping a successful PUT
+// PutOk creates a Response wrapping a successful PUT
 func PutOk() *Response {
 	r := new(Response)
 	r.Status = "ok"
@@ -87,7 +87,8 @@ func (c *bfConnector) Run() {
 			resource := strings.Replace(rq.resource, "/"+c.name, "", 1)
 			fmt.Printf("connector %s response %s\n", c.name, resource)
 
-			// TODO(CaptainHayashi): other methods
+			// TODO(wlcx): A default and appropriate error for other methods
+			// atm this results in stalled http request
 			switch rq.method {
 			case "GET":
 				rq.resCh <- c.get(resource)
@@ -151,9 +152,6 @@ func (c *bfConnector) put(resource string, payload []byte) interface{} {
 /* These resMaps describe simple composite resources, mapping each child
  * resource to the functions handling them.
  *
- * TODO(CaptainHayashi): add support for things that aren't GET
- *   (have each resource be a jump table of possible methods, or send the method
- *    to the resMap func?)
  * TODO(CaptainHayashi): decouple traversal from GET
  * TODO(CaptainHayashi): maybe make traversal iterative instead of recursive?
  */

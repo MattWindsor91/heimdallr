@@ -12,7 +12,6 @@ import (
 )
 
 type httpRequest struct {
-	// TODO(CaptainHayashi): method, payload
 	resource string
 	method   string
 	payload  []byte
