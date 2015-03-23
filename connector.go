@@ -182,7 +182,7 @@ func (c *bfConnector) playerGet(resourcePath []string) interface{} {
 	// TODO(CaptainHayashi): Probably a spec change, but the fact that this
 	// resource is guarded by more than one feature is iffy.  Do we need a
 	// Player feature?
-	if !(c.state.hasFeature(FtFileLoad) || c.state.hasFeature(FtTimeReport)) {
+	if !(c.state.hasFeature(baps3.FtFileLoad) || c.state.hasFeature(baps3.FtTimeReport)) {
 		return nil
 	}
 
@@ -243,7 +243,7 @@ func (c *bfConnector) timeGet(resourcePath []string) interface{} {
 	if 0 < len(resourcePath) {
 		return nil
 	}
-	if !c.state.hasFeature(FtTimeReport) {
+	if !c.state.hasFeature(baps3.FtTimeReport) {
 		return nil
 	}
 
@@ -256,7 +256,7 @@ func (c *bfConnector) fileGet(resourcePath []string) interface{} {
 	if 0 < len(resourcePath) {
 		return nil
 	}
-	if !c.state.hasFeature(FtFileLoad) {
+	if !c.state.hasFeature(baps3.FtFileLoad) {
 		return nil
 	}
 

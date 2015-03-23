@@ -16,7 +16,7 @@ import (
 // relevant to the current feature set aren't allocated?
 type serviceState struct {
 	// Core
-	features map[Feature]struct{}
+	features map[baps3.Feature]struct{}
 	state    string
 
 	// TimeReport
@@ -29,7 +29,7 @@ type serviceState struct {
 // initServiceState creates a new, blank, serviceState.
 func initServiceState() (s *serviceState) {
 	s = new(serviceState)
-	s.features = make(map[Feature]struct{})
+	s.features = make(map[baps3.Feature]struct{})
 
 	return
 }
@@ -51,12 +51,12 @@ func (s *serviceState) update(res baps3.Message) (err error) {
 }
 
 func (s *serviceState) updateFeaturesFromMessage(res baps3.Message) (err error) {
-	feats := make(map[Feature]struct{})
+	feats := make(map[baps3.Feature]struct{})
 
 	for i := 0; ; i++ {
 		if fstring, e := res.Arg(i); e == nil {
-			feat := LookupFeature(fstring)
-			if feat == FtUnknown {
+			feat := baps3.LookupFeature(fstring)
+			if feat == baps3.FtUnknown {
 				err = fmt.Errorf("unknown feature: %q", fstring)
 				break
 			}
@@ -127,7 +127,7 @@ func (s *serviceState) updateTimeFromMessage(res baps3.Message) (err error) {
 }
 
 // hasFeature returns whether the connected server advertises the given feature.
-func (s *serviceState) hasFeature(f Feature) bool {
+func (s *serviceState) hasFeature(f baps3.Feature) bool {
 	_, ok := s.features[f]
 	return ok
 }
