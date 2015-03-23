@@ -235,7 +235,7 @@ func (c *bfConnector) stateGet(resourcePath []string) interface{} {
 		return nil
 	}
 
-	return c.state
+	return c.state.state
 }
 
 // GET value for /player/time
