@@ -3,3 +3,5 @@
         hostport = "127.0.0.1:1350"
     [servers.C2]
         hostport = "127.0.0.1:1351"
+[http]
+    hostport = "0.0.0.0:3000"
