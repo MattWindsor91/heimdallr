@@ -30,7 +30,7 @@ type bfConnector struct {
 	name   string
 	wg     *sync.WaitGroup
 	logger *log.Logger
-	state  *serviceState
+	state  *baps3.ServiceState
 
 	reqCh chan httpRequest
 	resCh <-chan baps3.Message
@@ -51,7 +51,7 @@ func initBfConnector(name string, updateCh chan<- baps3.Message, wg *sync.WaitGr
 	c.logger = logger
 	c.reqCh = make(chan httpRequest)
 	c.updateCh = updateCh
-	c.state = initServiceState()
+	c.state = baps3.InitServiceState()
 	return
 }
 
@@ -77,7 +77,7 @@ func (c *bfConnector) Run() {
 			// TODO(CaptainHayashi): other methods
 			rq.resCh <- c.get(resource)
 		case res := <-c.resCh:
-			if err := c.state.update(res); err != nil {
+			if err := c.state.Update(res); err != nil {
 				fmt.Println(err)
 			}
 			c.updateCh <- res
@@ -182,7 +182,7 @@ func (c *bfConnector) playerGet(resourcePath []string) interface{} {
 	// TODO(CaptainHayashi): Probably a spec change, but the fact that this
 	// resource is guarded by more than one feature is iffy.  Do we need a
 	// Player feature?
-	if !(c.state.hasFeature(baps3.FtFileLoad) || c.state.hasFeature(baps3.FtTimeReport)) {
+	if !(c.state.HasFeature(baps3.FtFileLoad) || c.state.HasFeature(baps3.FtTimeReport)) {
 		return nil
 	}
 
@@ -204,7 +204,7 @@ func (c *bfConnector) featuresGet(resourcePath []string) interface{} {
 
 	fstrings := []string{}
 
-	for k := range c.state.features {
+	for k := range c.state.Features {
 		fstrings = append(fstrings, k.String())
 	}
 
@@ -235,7 +235,7 @@ func (c *bfConnector) stateGet(resourcePath []string) interface{} {
 		return nil
 	}
 
-	return c.state.state
+	return c.state.State
 }
 
 // GET value for /player/time
@@ -243,12 +243,12 @@ func (c *bfConnector) timeGet(resourcePath []string) interface{} {
 	if 0 < len(resourcePath) {
 		return nil
 	}
-	if !c.state.hasFeature(baps3.FtTimeReport) {
+	if !c.state.HasFeature(baps3.FtTimeReport) {
 		return nil
 	}
 
 	// Time is reported in _micro_seconds
-	return c.state.time.Nanoseconds() / 1000
+	return c.state.Time.Nanoseconds() / 1000
 }
 
 // GET value for /player/file
@@ -256,9 +256,9 @@ func (c *bfConnector) fileGet(resourcePath []string) interface{} {
 	if 0 < len(resourcePath) {
 		return nil
 	}
-	if !c.state.hasFeature(baps3.FtFileLoad) {
+	if !c.state.HasFeature(baps3.FtFileLoad) {
 		return nil
 	}
 
-	return c.state.file
+	return c.state.File
 }
