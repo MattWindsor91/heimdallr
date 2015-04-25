@@ -1,0 +1,24 @@
+[svcdefs]
+    # Variables in service definitions
+    # 
+    # %d        device          audio device number
+    # %H, %P    host, port      listen host and port
+    # %h, %p    dshost, dsport  Downstream host and port
+
+    playd = "playd %d %H %P"
+    listd = "ury-listd-go -p%p -P%p"
+
+[[group]]
+    name = "Channel 1"
+    [[group.services]]
+        svc = "playd"
+        host = "localhost"
+        port = 1350
+        device = 0
+    [[group.services]]
+        svc = "listd"
+        port = 1351
+        dsport = 1350
+
+[http]
+    listen = "0.0.0.0:3000"
