@@ -228,6 +228,16 @@ func (c *bfConnector) putResource(rm resMap, resourcePath []string, payload []by
 	return nil
 }
 
+// rootGet is the GET handler for the / resource.
+func (c *bfConnector) rootGet(resourcePath []string) interface{} {
+	return c.getResource(rootRes, resourcePath)
+}
+
+// rootPut is the PUT handler for the / resource.
+func (c *bfConnector) rootPut(resourcePath []string, payload []byte) interface{} {
+	return c.putResource(rootRes, resourcePath, payload)
+}
+
 // controlGet is the GET handler for the /control resource.
 func (c *bfConnector) controlGet(resourcePath []string) interface{} {
 	return c.getResource(controlRes, resourcePath)
@@ -250,15 +260,6 @@ func (c *bfConnector) playerGet(resourcePath []string) interface{} {
 	return c.getResource(playerRes, resourcePath)
 }
 
-// rootGet is the GET handler for the / resource.
-func (c *bfConnector) rootGet(resourcePath []string) interface{} {
-	return c.getResource(rootRes, resourcePath)
-}
-
-// rootPut is the PUT handler for the / resource.
-func (c *bfConnector) rootPut(resourcePath []string, payload []byte) interface{} {
-	return c.putResource(rootRes, resourcePath, payload)
-}
 
 // GET value for /control/features
 func (c *bfConnector) featuresGet(resourcePath []string) interface{} {
