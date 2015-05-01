@@ -307,6 +307,7 @@ func (c *bfConnector) stateGet(resourcePath []string) interface{} {
 var stateMap = map[string]baps3.MessageWord{
 	"play": baps3.RqPlay,
 	"stop": baps3.RqStop,
+	"quit": baps3.RqQuit,
 }
 
 // PUT function for /control/state
@@ -324,6 +325,8 @@ func (c *bfConnector) statePut(resourcePath []string, payload []byte) interface{
 		rqWord, ok := stateMap[newstate]
 		if ok {
 			c.conn.ReqCh <- *baps3.NewMessage(rqWord)
+		} else {
+			return "Unknown state"
 		}
 	}
 

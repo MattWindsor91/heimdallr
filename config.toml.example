@@ -1,22 +1,24 @@
 [svcdefs]
     # Variables in service definitions
-    # 
+    #
     # %d        device          audio device number
-    # %H, %P    host, port      listen host and port
-    # %h, %p    dshost, dsport  Downstream host and port
+    # %h, %p    host, port      listen host and port
+    # %H, %P    dshost, dsport  Downstream host and port
 
-    playd = "playd %d %H %P"
-    listd = "ury-listd-go -p%p -P%p"
+    [svcdefs.playd]
+        command = "playd %d %h %p"
+    [svcdefs.listd]
+        command = "ury-listd-go -p%p -P%P"
 
-[[group]]
+[[groups]]
     name = "Channel 1"
-    [[group.services]]
-        svc = "playd"
+    [[groups.services]]
+        name = "playd"
         host = "localhost"
         port = 1350
         device = 0
-    [[group.services]]
-        svc = "listd"
+    [[groups.services]]
+        name = "listd"
         port = 1351
         dsport = 1350
 
