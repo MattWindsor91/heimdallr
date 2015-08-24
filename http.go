@@ -7,68 +7,34 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/UniversityRadioYork/bifrost-go"
 )
 
-type httpRequest struct {
-	// TODO(CaptainHayashi): method, payload
-	resource string
-	resCh    chan<- interface{}
-}
-
-func initHTTP(connectors []*bfConnector, wspool *Wspool, log *log.Logger) http.Handler {
-	r := mux.NewRouter()
-	r.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "GET" {
-			http.Error(w, "Method not allowed", 405)
-			return
-		}
-		ws, err := upgrader.Upgrade(w, r, nil)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		c := &wsConn{send: make(chan []byte, 256), ws: ws}
-		wspool.register <- c
-		c.writeLoop()
-	})
-
-	for i := range connectors {
-		installConnector(r, connectors[i])
-	}
-
-	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./static/")))
-
-	return r
-}
-
-func installConnector(router *mux.Router, connector *bfConnector) {
-	fn := func(w http.ResponseWriter, r *http.Request) {
-		resCh := make(chan interface{})
-
-		fmt.Printf("sending request to %s\n", connector.name)
-
-		resource := r.URL.Path
-
-		w.Header().Add("Content-Type", "application/json")
-		connector.reqCh <- httpRequest{
-			resource,
-			resCh,
-		}
-
-		select {
-		case res := <-resCh:
-			err := dumpJSON(w, res)
+func handleHTTPReq(w http.ResponseWriter, r *http.Request, resTree *bifrost.ResourceNoder) {
+	if r.Method == "GET" {
+		response := bifrost.Read(*resTree, r.URL.Path)
+		if response.Status.Code != bifrost.StatusOk {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(w, response.Status.Message)
+		} else {
+			json, err := json.Marshal(response.Node)
 			if err != nil {
-				fmt.Println(err)
-				break
+				panic(err)
 			}
+			w.Write(json)
 		}
-	}
 
-	router.HandleFunc("/"+connector.name, fn)
-	router.HandleFunc("/"+connector.name+"/", fn)
-	router.PathPrefix("/" + connector.name + "/").HandlerFunc(fn)
+	} else {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	}
+}
+
+func initHTTP(resourceTree bifrost.ResourceNoder, log *log.Logger) http.Handler {
+	m := http.NewServeMux()
+	m.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		handleHTTPReq(w, r, &resourceTree)
+	})
+	return m
 }
 
 // dumpJSON dumps the JSON marshalling of res into w.

@@ -7,11 +7,10 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 
 	"github.com/BurntSushi/toml"
-	"github.com/UniversityRadioYork/baps3-go"
+	"github.com/UniversityRadioYork/bifrost-go"
 	"github.com/docopt/docopt-go"
 )
 
@@ -29,11 +28,6 @@ type Config struct {
 	HTTP    httpServer
 }
 
-func killConnectors(connectors []*bfConnector) {
-	for _, c := range connectors {
-		close(c.reqCh)
-	}
-}
 func parseArgs() (args map[string]interface{}, err error) {
 	usage := `heimdallr.
 
@@ -49,6 +43,66 @@ Options:
 
 	args, err = docopt.Parse(usage, nil, true, "heimdallr 0.0", false)
 	return
+}
+
+type ChannelWorker struct {
+	name        string
+	connector   *bifrost.Connector
+	channelRoot bifrost.ResourceNoder
+	resCh       chan bifrost.Message
+	quit        chan struct{}
+	logger      *log.Logger
+}
+
+func NewChannelWorker(
+	channelName string,
+	logger *log.Logger,
+	channelRoot bifrost.ResourceNoder,
+) *ChannelWorker {
+	resCh := make(chan bifrost.Message)
+	return &ChannelWorker{
+		channelName,
+		bifrost.InitConnector(channelName, resCh, logger),
+		channelRoot,
+		resCh,
+		make(chan struct{}),
+		logger,
+	}
+}
+
+func (w *ChannelWorker) Run(hostport string) {
+	w.connector.Connect(hostport)
+	go w.connector.Run()
+	for {
+		select {
+		case msg := <-w.resCh: // A wild message from downstream appears!
+			w.processMsg(&msg)
+		case <-w.quit:
+			return
+		}
+	}
+}
+
+func (w *ChannelWorker) processMsg(msg *bifrost.Message) {
+	w.logger.Println(w.name + ": " + msg.String())
+	switch msg.Word() {
+	case bifrost.RsRes:
+		if args := msg.Args(); len(args) == 3 { // Nasty hack until update is implemented
+			if args[1] == "Entry" {
+				err := bifrost.Add(w.channelRoot, args[0], bifrost.NewEntryResourceNode(bifrost.BifrostTypeString(args[2])))
+				if err != nil {
+					panic(err)
+				}
+			}
+		}
+	case bifrost.RsOhai:
+		//
+	}
+}
+
+// Goodbye cruel world
+func (w *ChannelWorker) Die() {
+	w.quit <- struct{}{}
 }
 
 func main() {
@@ -68,47 +122,33 @@ func main() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT)
 
-	resCh := make(chan baps3.Message)
+	resCh := make(chan bifrost.Message)
 
-	connectors := []*bfConnector{}
+	workers := []*ChannelWorker{}
 
-	wg := new(sync.WaitGroup)
+	resourceTree := bifrost.NewDirectoryResourceNode()
 
 	for name, s := range conf.Servers {
-		c := initBfConnector(name, resCh, wg, logger)
-		connectors = append(connectors, c)
-		c.conn.Connect(s.Hostport)
-		go c.Run()
+		channelNode := bifrost.NewDirectoryResourceNode()
+		if err := bifrost.Add(resourceTree, "/"+name, channelNode); err != nil { // Add the root channel node
+			panic(err)
+		}
+		worker := NewChannelWorker(name, logger, &channelNode)
+		workers = append(workers, worker)
+		go worker.Run(s.Hostport)
 	}
-
-	// Goroutine for the heimdallr connector, and the lower-level
-	// baps3-go connector.
-	wg.Add(len(connectors) * 2)
-	wspool := NewWspool(wg)
-	initAndStartHTTP(conf.HTTP, connectors, wspool, logger)
-	go wspool.run()
-
+	r := initHTTP(resourceTree, logger)
+	go http.ListenAndServe(conf.HTTP.Hostport, r)
 	for {
 		select {
 		case data := <-resCh:
 			fmt.Println(data.String())
-			wspool.broadcast <- []byte(data.String())
 		case <-sigs:
-			killConnectors(connectors)
-			close(wspool.broadcast)
-			wg.Wait()
-			logger.Println("Exiting...")
+			logger.Println("Quitting...")
+			for _, w := range workers {
+				w.Die()
+			}
 			os.Exit(0)
 		}
 	}
-}
-
-func initAndStartHTTP(conf httpServer, connectors []*bfConnector, wspool *Wspool, logger *log.Logger) {
-	mux := initHTTP(connectors, wspool, logger)
-	go func() {
-		err := http.ListenAndServe(conf.Hostport, mux)
-		if err != nil {
-			logger.Println(err)
-		}
-	}()
 }
