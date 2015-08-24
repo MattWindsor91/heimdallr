@@ -35,19 +35,19 @@ func killConnectors(connectors []*bfConnector) {
 	}
 }
 func parseArgs() (args map[string]interface{}, err error) {
-	usage := `bifrost.
+	usage := `heimdallr.
 
 Usage:
-  bifrost [-c <configfile>]
-  bifrost -h
-  bifrost -v
+  heimdallr [-c <configfile>]
+  heimdallr -h
+  heimdallr -v
 
 Options:
-  -c --config=<configfile>    Path to bifrost config file [default: config.toml].
+  -c --config=<configfile>    Path to heimdallr config file [default: config.toml].
   -h --help                   Show this help message.
   -v --version                Show version.`
 
-	args, err = docopt.Parse(usage, nil, true, "bifrost 0.0", false)
+	args, err = docopt.Parse(usage, nil, true, "heimdallr 0.0", false)
 	return
 }
 
@@ -81,7 +81,7 @@ func main() {
 		go c.Run()
 	}
 
-	// Goroutine for the bifrost connector, and the lower-level
+	// Goroutine for the heimdallr connector, and the lower-level
 	// baps3-go connector.
 	wg.Add(len(connectors) * 2)
 	wspool := NewWspool(wg)

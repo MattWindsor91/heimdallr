@@ -1,6 +1,6 @@
-# :rainbow: BIFROST :zap: [![Build Status](https://travis-ci.org/UniversityRadioYork/bifrost.svg)](https://travis-ci.org/UniversityRadioYork/bifrost)
+# Heimdallr [![Build Status](https://travis-ci.org/UniversityRadioYork/heimdallr.svg)](https://travis-ci.org/UniversityRadioYork/heimdallr)
 
-The **BAPS3 Interface For Representation-Oriented State Transfer**, or the main API daemon for URY's [BAPS3] implementation (replacing the [ury-rapid] project).  Programmed with :heart: in [Go].
+Heimdallr is the API server for URY's [BAPS3] implementation (replacing the [ury-rapid] project).  Programmed with :heart: in [Go].
 
 A Go re-implementation of the Rapid BAPS3 API daemon.  More information to come here.
 
